@@ -6,7 +6,7 @@ import byx.ioc.annotation.Component;
 @Component
 public class B {
     @Autowire
-    private C c;
+    public C c;
 
     public C getC() {
         return c;

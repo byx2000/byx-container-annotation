@@ -68,8 +68,6 @@ public class AnnotationContainerFactory implements ContainerFactory {
             }
         }
 
-        //Field[] fields = type.getDeclaredFields();
-        //System.out.println(Arrays.toString(fields));
         List<Field> autoWireFields = new ArrayList<>();
         for (Field field : type.getDeclaredFields()) {
             if (field.isAnnotationPresent(Autowire.class)) {
