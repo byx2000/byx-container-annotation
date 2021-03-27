@@ -1,5 +1,6 @@
 package byx.ioc.factory;
 
+import byx.ioc.annotation.Autowire;
 import byx.ioc.annotation.Component;
 import byx.ioc.annotation.Id;
 import byx.ioc.core.Container;
@@ -10,7 +11,9 @@ import byx.ioc.util.ReflectUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 
 public class AnnotationContainerFactory implements ContainerFactory {
@@ -37,7 +40,7 @@ public class AnnotationContainerFactory implements ContainerFactory {
                 for (Method method : c.getDeclaredMethods()) {
                     if (method.isAnnotationPresent(Component.class)) {
                         if (method.isAnnotationPresent(Id.class)) {
-                            Id id = c.getAnnotation(Id.class);
+                            Id id = method.getAnnotation(Id.class);
                             container.registerObject(id.value(), createByMethod(c, method, container));
                         } else {
                             container.registerObject(method.getName(), createByMethod(c, method, container));
@@ -65,6 +68,15 @@ public class AnnotationContainerFactory implements ContainerFactory {
             }
         }
 
+        //Field[] fields = type.getDeclaredFields();
+        //System.out.println(Arrays.toString(fields));
+        List<Field> autoWireFields = new ArrayList<>();
+        for (Field field : type.getDeclaredFields()) {
+            if (field.isAnnotationPresent(Autowire.class)) {
+                autoWireFields.add(field);
+            }
+        }
+
         return new ObjectFactory() {
             @Override
             public Object doInstantiate() {
@@ -86,7 +98,14 @@ public class AnnotationContainerFactory implements ContainerFactory {
 
             @Override
             public void doInitialization(Object obj) {
-
+                for (Field field : autoWireFields) {
+                    try {
+                        field.setAccessible(true);
+                        field.set(obj, container.getObject(field.getType()));
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
 
             @Override

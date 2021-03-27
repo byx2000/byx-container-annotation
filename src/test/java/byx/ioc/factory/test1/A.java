@@ -20,4 +20,9 @@ public class A {
     public String message() {
         return "hello";
     }
+
+    @Component
+    public String s2(Double d, @Id("info") String s) {
+        return d + " " + s;
+    }
 }

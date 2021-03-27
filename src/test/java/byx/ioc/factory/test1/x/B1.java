@@ -14,4 +14,9 @@ public class B1 extends B {
     public String info() {
         return "hi";
     }
+
+    @Component @Id("pi")
+    public Double getPi() {
+        return 3.14;
+    }
 }
