@@ -15,6 +15,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class AnnotationContainerFactory implements ContainerFactory {
     private final String packageName;
@@ -25,41 +27,59 @@ public class AnnotationContainerFactory implements ContainerFactory {
 
     @Override
     public Container create() {
+        // 获取包下的所有类
         List<Class<?>> classes = ReflectUtils.getPackageClasses(packageName);
 
+        // 创建容器
         Container container = new SimpleContainer();
+
+        // 扫描包下所有类
         for (Class<?> c : classes) {
             if (c.isAnnotationPresent(Component.class)) {
-                if (c.isAnnotationPresent(Id.class)) {
-                    Id id = c.getAnnotation(Id.class);
-                    container.registerObject(id.value(), createByConstructor(c, container));
-                } else {
-                    container.registerObject(c.getCanonicalName(), createByConstructor(c, container));
-                }
-
-                for (Method method : c.getDeclaredMethods()) {
-                    if (method.isAnnotationPresent(Component.class)) {
-                        if (method.isAnnotationPresent(Id.class)) {
-                            Id id = method.getAnnotation(Id.class);
-                            container.registerObject(id.value(), createByMethod(c, method, container));
-                        } else {
-                            container.registerObject(method.getName(), createByMethod(c, method, container));
-                        }
-                    }
-                }
+                processClass(c, container);
             }
         }
 
         return container;
     }
 
-    private static ObjectFactory createByConstructor(Class<?> type, Container container) {
+    private static void processClass(Class<?> type, Container container) {
+        // 处理实例化
+        Supplier<Object> instantiate = processInstantiate(type, container);
+
+        // 处理初始化
+        Consumer<Object> initialization = processInitialization(type, container);
+
+        // 处理方法
+        for (Method method : type.getMethods()) {
+            if (method.isAnnotationPresent(Component.class)) {
+                processMethod(type, method, container);
+            }
+        }
+
+        // 创建对象工厂
+        ObjectFactory factory = ObjectFactory.of(instantiate, initialization, type);
+
+        // 获取id
+        String id = type.isAnnotationPresent(Id.class)
+                ? type.getAnnotation(Id.class).value()
+                : type.getCanonicalName();
+
+        // 注册对象工厂
+        container.registerObject(id, factory);
+    }
+
+    private static Supplier<Object> processInstantiate(Class<?> type, Container container) {
+        // 获取用于实例化对象的构造函数
         Constructor<?>[] constructors = type.getConstructors();
         Constructor<?> constructor = constructors[0];
+
+        // 获取构造函数参数的注入类型
         Class<?>[] paramTypes = constructor.getParameterTypes();
+
+        // 获取构造函数参数的注入id
         Annotation[][] paramAnnotations = constructor.getParameterAnnotations();
         String[] paramIds = new String[paramTypes.length];
-
         for (int i = 0; i < paramTypes.length; ++i) {
             for (Annotation a : paramAnnotations[i]) {
                 if (a instanceof Id) {
@@ -68,6 +88,27 @@ public class AnnotationContainerFactory implements ContainerFactory {
             }
         }
 
+        // 返回实例化函数
+        return () -> {
+            Object[] params = new Object[paramTypes.length];
+            for (int i = 0; i < params.length; ++i) {
+                if (paramIds[i] != null) {
+                    params[i] = container.getObject(paramIds[i]);
+                } else {
+                    params[i] = container.getObject(paramTypes[i]);
+                }
+            }
+
+            try {
+                return constructor.newInstance(params);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        };
+    }
+
+    private static Consumer<Object> processInitialization(Class<?> type, Container container) {
+        // 获取所有需要被赋值的字段
         List<Field> autoWireFields = new ArrayList<>();
         for (Field field : type.getDeclaredFields()) {
             if (field.isAnnotationPresent(Autowire.class)) {
@@ -75,49 +116,26 @@ public class AnnotationContainerFactory implements ContainerFactory {
             }
         }
 
-        return new ObjectFactory() {
-            @Override
-            public Object doInstantiate() {
-                Object[] params = new Object[paramTypes.length];
-                for (int i = 0; i < params.length; ++i) {
-                    if (paramIds[i] != null) {
-                        params[i] = container.getObject(paramIds[i]);
-                    } else {
-                        params[i] = container.getObject(paramTypes[i]);
-                    }
-                }
-
+        // 返回字段初始化函数
+        return obj -> {
+            for (Field field : autoWireFields) {
                 try {
-                    return constructor.newInstance(params);
-                } catch (Exception e) {
+                    field.setAccessible(true);
+                    field.set(obj, container.getObject(field.getType()));
+                } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
                 }
-            }
-
-            @Override
-            public void doInitialization(Object obj) {
-                for (Field field : autoWireFields) {
-                    try {
-                        field.setAccessible(true);
-                        field.set(obj, container.getObject(field.getType()));
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-
-            @Override
-            public Class<?> getType() {
-                return type;
             }
         };
     }
 
-    private static ObjectFactory createByMethod(Class<?> instanceType, Method method, Container container) {
+    private static void processMethod(Class<?> instanceType, Method method, Container container) {
+        // 获取方法参数注入类型
         Class<?>[] paramTypes = method.getParameterTypes();
         Annotation[][] paramAnnotations = method.getParameterAnnotations();
+        
+        // 获取方法参数注入id
         String[] paramIds = new String[paramTypes.length];
-
         for (int i = 0; i < paramTypes.length; ++i) {
             for (Annotation a : paramAnnotations[i]) {
                 if (a instanceof Id) {
@@ -126,40 +144,37 @@ public class AnnotationContainerFactory implements ContainerFactory {
             }
         }
 
+        // 获取方法所属的对象实例id
         String instanceId = instanceType.isAnnotationPresent(Id.class)
                 ? instanceType.getAnnotation(Id.class).value()
                 : null;
 
-        return new ObjectFactory() {
-            @Override
-            public Object doInstantiate() {
-                Object[] params = new Object[paramTypes.length];
-                for (int i = 0; i < params.length; ++i) {
-                    if (paramIds[i] != null) {
-                        params[i] = container.getObject(paramIds[i]);
-                    } else {
-                        params[i] = container.getObject(paramTypes[i]);
-                    }
-                }
-
-                Object instance = (instanceId == null) ? container.getObject(instanceType) : container.getObject(instanceId);
-
-                try {
-                    return method.invoke(instance, params);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
+        // 创建对象工厂
+        ObjectFactory factory = ObjectFactory.of(() -> {
+            Object[] params = new Object[paramTypes.length];
+            for (int i = 0; i < params.length; ++i) {
+                if (paramIds[i] != null) {
+                    params[i] = container.getObject(paramIds[i]);
+                } else {
+                    params[i] = container.getObject(paramTypes[i]);
                 }
             }
 
-            @Override
-            public void doInitialization(Object obj) {
+            Object instance = (instanceId == null) ? container.getObject(instanceType) : container.getObject(instanceId);
 
+            try {
+                return method.invoke(instance, params);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
+        }, method.getReturnType());
 
-            @Override
-            public Class<?> getType() {
-                return method.getReturnType();
-            }
-        };
+        // 获取id
+        String id = method.isAnnotationPresent(Id.class)
+                ? method.getAnnotation(Id.class).value()
+                : method.getName();
+
+        // 注册对象工厂
+        container.registerObject(id, factory);
     }
 }
