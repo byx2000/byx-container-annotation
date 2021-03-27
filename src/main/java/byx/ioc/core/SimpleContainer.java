@@ -79,14 +79,11 @@ public class SimpleContainer implements Container {
     }
 
     private Object createObject(String id, ObjectFactory factory) {
-        //System.out.println("实例化：" + id);
         Object obj = factory.doInstantiate();
         if (idCache.containsKey(id)) {
             obj = idCache.get(id);
         }
-        //System.out.println("缓存：" + id);
         cacheObject(id, factory.getType(), obj);
-        //System.out.println("初始化：" + id);
         factory.doInitialization(obj);
         return obj;
     }
