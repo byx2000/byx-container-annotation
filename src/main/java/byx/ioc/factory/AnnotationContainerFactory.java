@@ -2,11 +2,14 @@ package byx.ioc.factory;
 
 import byx.ioc.annotation.Autowire;
 import byx.ioc.annotation.Component;
+import byx.ioc.annotation.Create;
 import byx.ioc.annotation.Id;
 import byx.ioc.core.Container;
 import byx.ioc.core.ContainerFactory;
 import byx.ioc.core.ObjectFactory;
 import byx.ioc.core.SimpleContainer;
+import byx.ioc.exception.ConstructorMultiDefException;
+import byx.ioc.exception.ConstructorNotFoundException;
 import byx.ioc.util.ReflectUtils;
 
 import java.lang.annotation.Annotation;
@@ -14,6 +17,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -72,7 +76,21 @@ public class AnnotationContainerFactory implements ContainerFactory {
     private static Supplier<Object> processCreate(Class<?> type, Container container) {
         // 获取用于实例化对象的构造函数
         Constructor<?>[] constructors = type.getConstructors();
-        Constructor<?> constructor = constructors[0];
+        Constructor<?> constructor;
+        if (constructors.length == 1) {
+            constructor = constructors[0];
+        } else {
+            constructors = Arrays.stream(constructors)
+                    .filter(c -> c.isAnnotationPresent(Create.class))
+                    .toArray(Constructor[]::new);
+            if (constructors.length == 0) {
+                throw new ConstructorNotFoundException(type);
+            } else if (constructors.length > 1) {
+                throw new ConstructorMultiDefException(type);
+            } else {
+                constructor = constructors[0];
+            }
+        }
 
         // 获取构造函数参数的注入类型
         Class<?>[] paramTypes = constructor.getParameterTypes();
@@ -89,6 +107,7 @@ public class AnnotationContainerFactory implements ContainerFactory {
         }
 
         // 返回实例化函数
+        Constructor<?> finalConstructor = constructor;
         return () -> {
             Object[] params = new Object[paramTypes.length];
             for (int i = 0; i < params.length; ++i) {
@@ -100,7 +119,7 @@ public class AnnotationContainerFactory implements ContainerFactory {
             }
 
             try {
-                return constructor.newInstance(params);
+                return finalConstructor.newInstance(params);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -174,6 +193,7 @@ public class AnnotationContainerFactory implements ContainerFactory {
             Object instance = (instanceId == null) ? container.getObject(instanceType) : container.getObject(instanceId);
 
             try {
+                method.setAccessible(true);
                 return method.invoke(instance, params);
             } catch (Exception e) {
                 throw new RuntimeException(e);

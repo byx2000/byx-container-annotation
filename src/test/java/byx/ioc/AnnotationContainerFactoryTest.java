@@ -1,6 +1,8 @@
 package byx.ioc;
 
 import byx.ioc.core.Container;
+import byx.ioc.exception.ConstructorMultiDefException;
+import byx.ioc.exception.ConstructorNotFoundException;
 import byx.ioc.factory.AnnotationContainerFactory;
 import byx.ioc.factory.test1.A;
 import byx.ioc.factory.test1.x.B;
@@ -12,7 +14,7 @@ import byx.ioc.factory.test4.B1;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ContainerFactoryTest {
+public class AnnotationContainerFactoryTest {
     @Test
     public void test1() {
         Container container = new AnnotationContainerFactory("byx.ioc.factory.test1").create();
@@ -111,5 +113,22 @@ public class ContainerFactoryTest {
         assertSame(a.getB(), b);
         assertSame(b.getC(), c);
         assertSame(c.getA(), a);
+    }
+
+    @Test
+    public void test6() {
+        Container container = new AnnotationContainerFactory("byx.ioc.factory.test6.x").create();
+        for (String id : container.getObjectIds()) {
+            System.out.println(id);
+        }
+
+        byx.ioc.factory.test6.x.A a = container.getObject(byx.ioc.factory.test6.x.A.class);
+        byx.ioc.factory.test6.x.B b = container.getObject(byx.ioc.factory.test6.x.B.class);
+
+        assertNotNull(b);
+        assertSame(a.getB(), b);
+
+        assertThrows(ConstructorNotFoundException.class, () -> new AnnotationContainerFactory("byx.ioc.factory.test6.y").create());
+        assertThrows(ConstructorMultiDefException.class, () -> new AnnotationContainerFactory("byx.ioc.factory.test6.z").create());
     }
 }
