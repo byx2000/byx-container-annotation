@@ -4,19 +4,19 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public interface ObjectFactory {
-    Object doInstantiate();
-    void doInitialization(Object obj);
+    Object doCreate();
+    void doInit(Object obj);
     Class<?> getType();
 
     static ObjectFactory of(Supplier<Object> instantiate, Consumer<Object> initialization, Class<?> type) {
         return new ObjectFactory() {
             @Override
-            public Object doInstantiate() {
+            public Object doCreate() {
                 return instantiate.get();
             }
 
             @Override
-            public void doInitialization(Object obj) {
+            public void doInit(Object obj) {
                 initialization.accept(obj);
             }
 

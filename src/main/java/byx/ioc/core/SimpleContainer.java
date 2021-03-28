@@ -79,12 +79,12 @@ public class SimpleContainer implements Container {
     }
 
     private Object createObject(String id, ObjectFactory factory) {
-        Object obj = factory.doInstantiate();
+        Object obj = factory.doCreate();
         if (idCache.containsKey(id)) {
             obj = idCache.get(id);
         }
         cacheObject(id, factory.getType(), obj);
-        factory.doInitialization(obj);
+        factory.doInit(obj);
         return obj;
     }
 }
