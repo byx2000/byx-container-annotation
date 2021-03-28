@@ -8,16 +8,16 @@ public interface ObjectFactory {
     void doInit(Object obj);
     Class<?> getType();
 
-    static ObjectFactory of(Supplier<Object> instantiate, Consumer<Object> initialization, Class<?> type) {
+    static ObjectFactory of(Supplier<Object> create, Consumer<Object> init, Class<?> type) {
         return new ObjectFactory() {
             @Override
             public Object doCreate() {
-                return instantiate.get();
+                return create.get();
             }
 
             @Override
             public void doInit(Object obj) {
-                initialization.accept(obj);
+                init.accept(obj);
             }
 
             @Override

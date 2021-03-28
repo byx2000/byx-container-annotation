@@ -45,10 +45,10 @@ public class AnnotationContainerFactory implements ContainerFactory {
 
     private static void processClass(Class<?> type, Container container) {
         // 处理实例化
-        Supplier<Object> instantiate = processInstantiate(type, container);
+        Supplier<Object> instantiate = processCreate(type, container);
 
         // 处理初始化
-        Consumer<Object> initialization = processInitialization(type, container);
+        Consumer<Object> initialization = processInit(type, container);
 
         // 处理方法
         for (Method method : type.getMethods()) {
@@ -69,7 +69,7 @@ public class AnnotationContainerFactory implements ContainerFactory {
         container.registerObject(id, factory);
     }
 
-    private static Supplier<Object> processInstantiate(Class<?> type, Container container) {
+    private static Supplier<Object> processCreate(Class<?> type, Container container) {
         // 获取用于实例化对象的构造函数
         Constructor<?>[] constructors = type.getConstructors();
         Constructor<?> constructor = constructors[0];
@@ -107,21 +107,32 @@ public class AnnotationContainerFactory implements ContainerFactory {
         };
     }
 
-    private static Consumer<Object> processInitialization(Class<?> type, Container container) {
+    private static Consumer<Object> processInit(Class<?> type, Container container) {
         // 获取所有需要被赋值的字段
         List<Field> autoWireFields = new ArrayList<>();
+        List<String> autoWireIds = new ArrayList<>();
         for (Field field : type.getDeclaredFields()) {
             if (field.isAnnotationPresent(Autowire.class)) {
                 autoWireFields.add(field);
+                String id = field.isAnnotationPresent(Id.class)
+                        ? field.getAnnotation(Id.class).value()
+                        : null;
+                autoWireIds.add(id);
             }
         }
 
         // 返回字段初始化函数
         return obj -> {
-            for (Field field : autoWireFields) {
+            for (int i = 0; i < autoWireFields.size(); ++i) {
+                Field field = autoWireFields.get(i);
+                field.setAccessible(true);
+                String id = autoWireIds.get(i);
                 try {
-                    field.setAccessible(true);
-                    field.set(obj, container.getObject(field.getType()));
+                    if (id == null) {
+                        field.set(obj, container.getObject(field.getType()));
+                    } else {
+                        field.set(obj, container.getObject(id));
+                    }
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
                 }

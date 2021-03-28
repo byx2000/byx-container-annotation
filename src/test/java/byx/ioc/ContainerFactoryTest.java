@@ -5,6 +5,10 @@ import byx.ioc.factory.AnnotationContainerFactory;
 import byx.ioc.factory.test1.A;
 import byx.ioc.factory.test1.x.B;
 import byx.ioc.factory.test2.C;
+import byx.ioc.factory.test3.X;
+import byx.ioc.factory.test3.Y;
+import byx.ioc.factory.test3.Z;
+import byx.ioc.factory.test4.B1;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -70,5 +74,26 @@ public class ContainerFactoryTest {
         assertSame(a.getB(), b);
         assertSame(b.getC(), c);
         assertSame(c.getA(), a);
+
+        X x = container.getObject(X.class);
+        Y y = container.getObject(Y.class);
+        Z z = container.getObject(Z.class);
+
+        assertSame(x.getY(), y);
+        assertSame(y.getZ(), z);
+        assertSame(z.getX(), x);
+    }
+
+    @Test
+    public void test4() {
+        Container container = new AnnotationContainerFactory("byx.ioc.factory.test4").create();
+        for (String id : container.getObjectIds()) {
+            System.out.println(id);
+        }
+
+        byx.ioc.factory.test4.A a = container.getObject(byx.ioc.factory.test4.A.class);
+        B1 b1 = container.getObject(B1.class);
+        assertNotNull(b1);
+        assertSame(a.getB(), b1);
     }
 }
