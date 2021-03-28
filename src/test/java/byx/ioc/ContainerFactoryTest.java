@@ -96,4 +96,20 @@ public class ContainerFactoryTest {
         assertNotNull(b1);
         assertSame(a.getB(), b1);
     }
+
+    @Test
+    public void test5() {
+        Container container = new AnnotationContainerFactory("byx.ioc.factory.test5").create();
+        for (String id : container.getObjectIds()) {
+            System.out.println(id);
+        }
+
+        byx.ioc.factory.test5.A a = container.getObject(byx.ioc.factory.test5.A.class);
+        byx.ioc.factory.test5.B b = container.getObject(byx.ioc.factory.test5.B.class);
+        byx.ioc.factory.test5.C c = container.getObject(byx.ioc.factory.test5.C.class);
+
+        assertSame(a.getB(), b);
+        assertSame(b.getC(), c);
+        assertSame(c.getA(), a);
+    }
 }
