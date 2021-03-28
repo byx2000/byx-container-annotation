@@ -22,6 +22,11 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/**
+ * ContainerFactory的实现类：通过扫描注解来创建IOC容器
+ *
+ * @author byx
+ */
 public class AnnotationContainerFactory implements ContainerFactory {
     private final String packageName;
 
