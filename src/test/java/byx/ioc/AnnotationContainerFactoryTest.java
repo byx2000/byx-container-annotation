@@ -131,4 +131,18 @@ public class AnnotationContainerFactoryTest {
         assertThrows(ConstructorNotFoundException.class, () -> new AnnotationContainerFactory("byx.ioc.factory.test6.y").create());
         assertThrows(ConstructorMultiDefException.class, () -> new AnnotationContainerFactory("byx.ioc.factory.test6.z").create());
     }
+
+    @Test
+    public void test7() {
+        Container container = new AnnotationContainerFactory("byx.ioc.factory.test7.测试中文包名").create();
+        for (String id : container.getObjectIds()) {
+            System.out.println(id);
+        }
+
+        byx.ioc.factory.test7.测试中文包名.A a = container.getObject(byx.ioc.factory.test7.测试中文包名.A.class);
+        byx.ioc.factory.test7.测试中文包名.B b = container.getObject(byx.ioc.factory.test7.测试中文包名.B.class);
+
+        assertNotNull(b);
+        assertSame(a.getB(), b);
+    }
 }

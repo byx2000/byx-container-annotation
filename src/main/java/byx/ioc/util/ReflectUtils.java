@@ -1,9 +1,12 @@
 package byx.ioc.util;
 
+import byx.ioc.exception.PackageScanException;
+
 import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.util.*;
 
 public class ReflectUtils {
@@ -201,12 +204,17 @@ public class ReflectUtils {
      * 获取指定包下的所有类
      */
     public static List<Class<?>> getPackageClasses(String packageName) {
-        String packagePath = packageName.replace(".", File.separator);
-        File classpath = new File(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResource("")).getFile());
-        File root = new File(classpath, packagePath);
-        List<Class<?>> classes = new ArrayList<>();
-        traverseAllClassFiles(classpath.getAbsolutePath(), root, classes);
-        return classes;
+        try {
+            String packagePath = packageName.replace(".", File.separator);
+            URI uri = Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResource("")).toURI();
+            File classpath = new File(uri);
+            File root = new File(classpath, packagePath);
+            List<Class<?>> classes = new ArrayList<>();
+            traverseAllClassFiles(classpath.getAbsolutePath(), root, classes);
+            return classes;
+        } catch (Exception e) {
+            throw new PackageScanException(e);
+        }
     }
 
     /**
