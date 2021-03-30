@@ -11,9 +11,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import static byx.ioc.core.ObjectFactory.*;
 
-public class ContainerTest {
+public class SimpleContainerTest {
     @Test
-    public void testNormal() {
+    public void testNormal1() {
         ObjectFactory f1 = of(() -> "hello", String.class);
         ObjectFactory f2 = of(() -> 123, Integer.class);
         ObjectFactory f3 = of(() -> 3.14, Double.class);
@@ -41,6 +41,16 @@ public class ContainerTest {
         assertThrows(IdNotFoundException.class, () -> container.getObject("f5"));
         assertThrows(TypeNotFoundException.class, () -> container.getObject(Boolean.class));
         assertThrows(MultiTypeMatchException.class, () -> container.getObject(Double.class));
+    }
+
+    @Test
+    public void testNormal2() {
+        Container container = new SimpleContainer();
+        ObjectFactory f = of(() -> "hello", String.class);
+        container.registerObject("f", f);
+
+        CharSequence s = container.getObject(CharSequence.class);
+        assertEquals("hello", s);
     }
 
     public static class A {

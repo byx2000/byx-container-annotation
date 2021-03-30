@@ -19,11 +19,6 @@ public class SimpleContainer implements Container {
     private final Map<String, ObjectFactory> factories = new HashMap<>();
 
     /**
-     * 存储每一种类型的对象一共有多少个
-     */
-    private final Map<Class<?>, Integer> typeCount = new HashMap<>();
-
-    /**
      * 缓存已实例化的对象，用于解决循环依赖
      */
     private final Map<String, Object> cache = new HashMap<>();
@@ -46,17 +41,6 @@ public class SimpleContainer implements Container {
         }
     }
 
-    /**
-     * 检查指定类型的对象是否存在且唯一
-     */
-    private void checkTypeExistAndUnique(Class<?> type) {
-        if (!typeCount.containsKey(type)) {
-            throw new TypeNotFoundException(type);
-        } else if (typeCount.get(type) > 1) {
-            throw new MultiTypeMatchException(type);
-        }
-    }
-
     @Override
     public void registerObject(String id, ObjectFactory factory) {
         // 检查id是否重复
@@ -64,15 +48,6 @@ public class SimpleContainer implements Container {
 
         // 添加ObjectFactory
         factories.put(id, factory);
-
-        // 更新类型计数
-        Class<?> type = factory.getType();
-        if (typeCount.containsKey(type)) {
-            int currentCount = typeCount.get(type);
-            typeCount.put(type, currentCount + 1);
-        } else {
-            typeCount.put(type, 1);
-        }
     }
 
     @Override
@@ -92,9 +67,6 @@ public class SimpleContainer implements Container {
 
     @Override
     public <T> T getObject(Class<T> type) {
-        // 检查指定类型的对象是否存在且唯一
-        checkTypeExistAndUnique(type);
-
         // 尝试从缓存中取
         for (Object obj : cache.values()) {
             if (type.isAssignableFrom(obj.getClass())) {
@@ -103,14 +75,26 @@ public class SimpleContainer implements Container {
         }
 
         // 如果缓存中没有，则通过ObjectFactory创建
+        ObjectFactory f = null;
+        String fid = null;
         for (String id : factories.keySet()) {
             ObjectFactory factory = factories.get(id);
             if (type.isAssignableFrom(factory.getType())) {
-                return type.cast(createObject(id, factory));
+                // 存在多个匹配项
+                if (f != null) {
+                    throw new MultiTypeMatchException(type);
+                }
+                f = factory;
+                fid = id;
             }
         }
 
-        // 理论上代码不会执行到这里
+        // 找到唯一的项
+        if (f != null) {
+            return type.cast(createObject(fid, f));
+        }
+
+        // 找不到指定类型的对象
         throw new TypeNotFoundException(type);
     }
 
