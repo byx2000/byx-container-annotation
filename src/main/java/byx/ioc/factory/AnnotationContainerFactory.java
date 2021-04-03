@@ -2,7 +2,6 @@ package byx.ioc.factory;
 
 import byx.ioc.annotation.Autowire;
 import byx.ioc.annotation.Component;
-import byx.ioc.annotation.Create;
 import byx.ioc.annotation.Id;
 import byx.ioc.core.Container;
 import byx.ioc.core.ContainerFactory;
@@ -86,7 +85,7 @@ public class AnnotationContainerFactory implements ContainerFactory {
             constructor = constructors[0];
         } else {
             constructors = Arrays.stream(constructors)
-                    .filter(c -> c.isAnnotationPresent(Create.class))
+                    .filter(c -> c.isAnnotationPresent(Autowire.class))
                     .toArray(Constructor[]::new);
             if (constructors.length == 0) {
                 throw new ConstructorNotFoundException(type);

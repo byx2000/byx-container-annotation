@@ -11,6 +11,6 @@ import java.lang.annotation.Target;
  * @author byx
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.CONSTRUCTOR})
 public @interface Autowire {
 }

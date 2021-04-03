@@ -216,9 +216,9 @@ public static void main(String[] args) {
 }
 ```
 
-`@Id`注解还可以加在方法参数和字段上，详情请看下面的构造函数参数注入、方法参数注入和自动装配。
+`@Id`注解还可以加在方法参数和字段上，请看[构造函数注入](#构造函数注入)、[方法参数注入](#方法参数注入)和[@Autowire自动装配](#@Autowire自动装配)。
 
-### 构造函数与参数注入
+### 构造函数注入
 
 如果某类只有一个构造函数（无参或有参），则IOC容器在实例化该类的时候会调用该构造函数，并自动从容器中注入构造函数的参数。
 
@@ -275,7 +275,7 @@ public static void main(String[] args) {
 }
 ```
 
-对于有多个构造函数的类，需要使用`@Create`注解标记实例化所用的构造函数。
+对于有多个构造函数的类，需要使用`@Autowire`注解标记实例化所用的构造函数。
 
 例子：
 
@@ -289,7 +289,7 @@ public class A {
         this.i = i;
     }
 
-    @Create
+    @Autowire
     public A(String s) {
         this.s = s;
     }
@@ -316,7 +316,7 @@ public static void main(String[] args) {
 }
 ```
 
-注意，不允许同时在多个构造函数上标注`@Create`注解。
+注意，不允许同时在多个构造函数上标注`@Autowire`注解。
 
 ### @Autowire自动装配
 
@@ -368,6 +368,8 @@ public static void main(String[] args) {
     A a = container.getObject(A.class);
 }
 ```
+
+`@Autowire`还可标注在构造函数上，请看[构造函数注入](#构造函数注入)。
 
 ### 方法参数注入
 

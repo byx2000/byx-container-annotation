@@ -1,7 +1,7 @@
 package byx.ioc.factory.test6.x;
 
+import byx.ioc.annotation.Autowire;
 import byx.ioc.annotation.Component;
-import byx.ioc.annotation.Create;
 
 @Component
 public class A {
@@ -11,7 +11,7 @@ public class A {
 
     }
 
-    @Create
+    @Autowire
     public A(B b) {
         this.b = b;
     }
