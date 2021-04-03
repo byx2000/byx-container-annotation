@@ -448,6 +448,33 @@ public static void main(String[] args) {
 }
 ```
 
+构造函数注入与字段注入混合的循环依赖：
+
+```java
+@Component
+public class A {
+    private final B b;
+
+    public A(B b) {
+        this.b = b;
+    }
+}
+
+@Component
+public class B {
+    @Autowire
+    private A a;
+}
+
+public static void main(String[] args) {
+    Container container = new AnnotationContainerFactory("byx.test").create();
+
+    // a和b都被成功创建并初始化
+    A a = container.getObject(A.class);
+    B b = container.getObject(B.class);
+}
+```
+
 三个对象的循环依赖：
 
 ```java
