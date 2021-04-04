@@ -6,6 +6,7 @@ import byx.ioc.exception.MultiTypeMatchException;
 import byx.ioc.exception.TypeNotFoundException;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Container的实现类：支持循环依赖的IOC容器
@@ -67,35 +68,18 @@ public class SimpleContainer implements Container {
 
     @Override
     public <T> T getObject(Class<T> type) {
-        // 尝试从缓存中取
-        for (Object obj : cache.values()) {
-            if (type.isAssignableFrom(obj.getClass())) {
-                return type.cast(obj);
-            }
+        List<String> candidates = factories.keySet().stream()
+                .filter(id -> type.isAssignableFrom(factories.get(id).getType()))
+                .collect(Collectors.toList());
+
+        if (candidates.size() == 0) {
+            throw new TypeNotFoundException(type);
+        }
+        if (candidates.size() > 1) {
+            throw new MultiTypeMatchException(type);
         }
 
-        // 如果缓存中没有，则通过ObjectFactory创建
-        ObjectFactory f = null;
-        String fid = null;
-        for (String id : factories.keySet()) {
-            ObjectFactory factory = factories.get(id);
-            if (type.isAssignableFrom(factory.getType())) {
-                // 存在多个匹配项
-                if (f != null) {
-                    throw new MultiTypeMatchException(type);
-                }
-                f = factory;
-                fid = id;
-            }
-        }
-
-        // 找到唯一的项
-        if (f != null) {
-            return type.cast(createObject(fid, f));
-        }
-
-        // 找不到指定类型的对象
-        throw new TypeNotFoundException(type);
+        return getObject(candidates.get(0));
     }
 
     @Override
