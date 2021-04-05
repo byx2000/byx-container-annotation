@@ -1,4 +1,4 @@
-package byx.ioc.factory.test2;
+package byx.ioc.factory;
 
 public class Counter {
     public static int c1 = 0;

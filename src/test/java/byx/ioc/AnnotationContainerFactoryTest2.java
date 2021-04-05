@@ -2,6 +2,7 @@ package byx.ioc;
 
 import byx.ioc.core.Container;
 import byx.ioc.factory.AnnotationContainerFactory;
+import byx.ioc.factory.Counter;
 import byx.ioc.factory.test2.*;
 import org.junit.jupiter.api.Test;
 
