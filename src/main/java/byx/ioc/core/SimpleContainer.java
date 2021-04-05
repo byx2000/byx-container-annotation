@@ -6,6 +6,7 @@ import byx.ioc.exception.MultiTypeMatchException;
 import byx.ioc.exception.TypeNotFoundException;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -19,10 +20,8 @@ public class SimpleContainer implements Container {
      */
     private final Map<String, ObjectFactory> factories = new HashMap<>();
 
-    /**
-     * 缓存已实例化的对象，用于解决循环依赖
-     */
-    private final Map<String, Object> cache = new HashMap<>();
+    private final Map<String, Object> cache1 = new HashMap<>();
+    private final Map<String, Supplier<Object>> cache2 = new HashMap<>();
 
     /**
      * 检查id是否重复
@@ -57,11 +56,6 @@ public class SimpleContainer implements Container {
         // 检查指定id的对象是否存在
         checkIdExist(id);
 
-        // 尝试从缓存中取
-        if (cache.containsKey(id)) {
-            return (T) cache.get(id);
-        }
-
         // 如果缓存中没有，则通过ObjectFactory创建
         return (T) createObject(id, factories.get(id));
     }
@@ -91,11 +85,16 @@ public class SimpleContainer implements Container {
      * 使用ObjectFactory创建对象
      */
     private Object createObject(String id, ObjectFactory factory) {
-        // 实例化对象
-        Object obj = factory.doCreate();
-
+        // 获取实例化的依赖
+        /*Object[] params = factory.getCreateDependencies();
         // 如果当前对象已经在缓存里了，说明在上一步的实例化过程中已经创建了当前对象
         // 所以此处直接返回缓存中的对象
+
+
+        // 实例化对象
+        Object obj;
+        obj = factory.doCreate(params);
+
         if (cache.containsKey(id)) {
             obj = cache.get(id);
         }
@@ -106,6 +105,36 @@ public class SimpleContainer implements Container {
         // 初始化对象
         factory.doInit(obj);
 
-        return obj;
+        return obj;*/
+
+        if (cache1.containsKey(id)) {
+            return cache1.get(id);
+        }
+
+        if (cache2.containsKey(id)) {
+            Object obj = cache2.get(id).get();
+            cache2.remove(id);
+            cache1.put(id, obj);
+            return obj;
+        }
+
+        Object[] params = factory.getCreateDependencies();
+
+        if (cache1.containsKey(id)) {
+            return cache1.get(id);
+        }
+        if (cache2.containsKey(id)) {
+            Object obj = cache2.get(id).get();
+            cache2.remove(id);
+            cache1.put(id, obj);
+            return obj;
+        }
+
+        Object obj = factory.doCreate(params);
+        cache2.put(id, () -> factory.doWrap(obj));
+
+        factory.doInit(obj);
+
+        return getObject(id);
     }
 }

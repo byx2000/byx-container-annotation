@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static byx.ioc.core.ObjectFactory.*;
 
 public class SimpleContainerTest {
-    @Test
+    /*@Test
     public void testNormal1() {
         ObjectFactory f1 = of(() -> "hello", String.class);
         ObjectFactory f2 = of(() -> 123, Integer.class);
@@ -199,29 +199,54 @@ public class SimpleContainerTest {
         assertSame(b, b1);
     }
 
+    public static int cnt1 = 0, cnt2 = 0;
+
     public static class C {
         D d;
         C(D d) {
+            cnt1++;
             this.d = d;
         }
     }
 
     public static class D {
         C c;
+        D() {
+            cnt2++;
+        }
     }
 
     @Test
     public void testTwoObjectCircularDependency7() {
         Container container = new SimpleContainer();
 
-        ObjectFactory f1 = of(() -> new C(container.getObject("d")), C.class);
+        ObjectFactory f1 = new ObjectFactory() {
+            @Override
+            public Class<?> getType() {
+                return C.class;
+            }
+
+            @Override
+            public Object[] getCreateDependencies() {
+                return new Object[]{container.getObject("d")};
+            }
+
+            @Override
+            public Object doCreate(Object[] params) {
+                return new C((D) params[0]);
+            }
+        };
         ObjectFactory f2 = of(D::new, obj -> ((D) obj).c = container.getObject("c"), D.class);
 
         container.registerObject("c", f1);
         container.registerObject("d", f2);
 
+        cnt1 = cnt2 = 0;
         C c = container.getObject("c");
         D d = container.getObject("d");
+
+        assertEquals(1, cnt1);
+        assertEquals(1, cnt2);
 
         assertSame(c.d, d);
         assertSame(d.c, c);
@@ -237,14 +262,33 @@ public class SimpleContainerTest {
     public void testTwoObjectCircularDependency8() {
         Container container = new SimpleContainer();
 
-        ObjectFactory f1 = of(() -> new C(container.getObject("d")), C.class);
+        ObjectFactory f1 = new ObjectFactory() {
+            @Override
+            public Class<?> getType() {
+                return C.class;
+            }
+
+            @Override
+            public Object[] getCreateDependencies() {
+                return new Object[]{container.getObject("d")};
+            }
+
+            @Override
+            public Object doCreate(Object[] params) {
+                return new C((D) params[0]);
+            }
+        };
         ObjectFactory f2 = of(D::new, obj -> ((D) obj).c = container.getObject("c"), D.class);
 
         container.registerObject("c", f1);
         container.registerObject("d", f2);
 
+        cnt1 = cnt2 = 0;
         D d = container.getObject("d");
         C c = container.getObject("c");
+
+        assertEquals(1, cnt1);
+        assertEquals(1, cnt2);
 
         assertSame(c.d, d);
         assertSame(d.c, c);
@@ -370,27 +414,38 @@ public class SimpleContainerTest {
         assertSame(c, c1);
         assertSame(d, d1);
     }
-    
+
+    public static int cnt3 = 0, cnt4 = 0, cnt5 = 0, cnt6 = 0;
+
     public static class X {
         Y y;
-        X() {}
+        X() {
+            cnt1++;
+        }
         X(Y y) {
+            cnt4++;
             this.y = y;
         }
     }
     
     public static class Y {
         Z z;
-        Y() {}
+        Y() {
+            cnt2++;
+        }
         Y(Z z) {
+            cnt5++;
             this.z = z;
         }
     }
     
     public static class Z {
         X x;
-        Z() {}
+        Z() {
+            cnt3++;
+        }
         Z(X x) {
+            cnt6++;
             this.x = x;
         }
     }
@@ -407,9 +462,14 @@ public class SimpleContainerTest {
         container.registerObject("y", f2);
         container.registerObject("z", f3);
 
+        cnt1 = cnt2 = cnt3 = 0;
         X x = container.getObject(X.class);
         Y y = container.getObject(Y.class);
         Z z = container.getObject(Z.class);
+
+        assertEquals(1, cnt1);
+        assertEquals(1, cnt2);
+        assertEquals(1, cnt3);
 
         assertSame(x.y, y);
         assertSame(y.z, z);
@@ -436,9 +496,14 @@ public class SimpleContainerTest {
         container.registerObject("y", f2);
         container.registerObject("z", f3);
 
+        cnt1 = cnt2 = cnt3 = 0;
         X x = container.getObject("x");
         Y y = container.getObject("y");
         Z z = container.getObject("z");
+
+        assertEquals(1, cnt1);
+        assertEquals(1, cnt2);
+        assertEquals(1, cnt3);
 
         assertSame(x.y, y);
         assertSame(y.z, z);
@@ -486,17 +551,41 @@ public class SimpleContainerTest {
     public void testThreeObjectCircularDependency4() {
         Container container = new SimpleContainer();
 
-        ObjectFactory f1 = of(() -> new X(container.getObject(Y.class)), X.class);
+        *//*ObjectFactory f1 = of(() -> new X(container.getObject(Y.class)), X.class);
         ObjectFactory f2 = of(() -> new Y(container.getObject(Z.class)), Y.class);
-        ObjectFactory f3 = of(Z::new, obj -> ((Z) obj).x = container.getObject(X.class), Z.class);
+        ObjectFactory f3 = of(Z::new, obj -> ((Z) obj).x = container.getObject(X.class), Z.class);*//*
+        *//*ObjectFactory f1 = new ObjectFactory() {
+            @Override
+            public Class<?> getType() {
+                return X.class;
+            }
+
+            @Override
+            public Object[] getCreateDependencies() {
+                return new Object[]{container.getObject(Y.class)};
+            }
+
+            @Override
+            public Object doCreate(Object[] params) {
+                return new X((Y) params[0]);
+            }
+        };*//*
+        ObjectFactory f1 = of(() -> new Object[]{container.getObject(Y.class)}, params -> new X((Y) params[0]), EMPTY_INIT, EMPTY_WRAP, X.class);
+        ObjectFactory f2 = of(() -> new Object[]{container.getObject(Z.class)}, params -> new Y((Z) params[0]), EMPTY_INIT, EMPTY_WRAP, Y.class);
+        ObjectFactory f3 = of(EMPTY_DEPENDENCIES, params -> new Z(), obj -> ((Z) obj).x = container.getObject(X.class), EMPTY_WRAP, Z.class);
 
         container.registerObject("x", f1);
         container.registerObject("y", f2);
         container.registerObject("z", f3);
 
+        cnt4 = cnt5 = cnt3 = 0;
         X x = container.getObject(X.class);
         Y y = container.getObject(Y.class);
         Z z = container.getObject(Z.class);
+
+        assertEquals(1, cnt4);
+        assertEquals(1, cnt5);
+        assertEquals(1, cnt3);
 
         assertSame(x.y, y);
         assertSame(y.z, z);
@@ -712,5 +801,5 @@ public class SimpleContainerTest {
         assertSame(x, x1);
         assertSame(y, y1);
         assertSame(z, z1);
-    }
+    }*/
 }

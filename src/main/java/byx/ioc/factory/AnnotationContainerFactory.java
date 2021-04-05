@@ -52,8 +52,11 @@ public class AnnotationContainerFactory implements ContainerFactory {
     }
 
     private static void processClass(Class<?> type, Container container) {
-        // 处理实例化
-        Supplier<Object> instantiate = processCreate(type, container);
+        // 获取实例化的构造函数
+        Constructor<?> constructor = getConstructor(type);
+
+        // 处理依赖解析
+        Supplier<Object[]> getDependencies = processDependencies(constructor, container);
 
         // 处理初始化
         Consumer<Object> initialization = processInit(type, container);
@@ -66,7 +69,31 @@ public class AnnotationContainerFactory implements ContainerFactory {
         }
 
         // 创建对象工厂
-        ObjectFactory factory = ObjectFactory.of(instantiate, initialization, type);
+        ObjectFactory factory = new ObjectFactory() {
+            @Override
+            public Class<?> getType() {
+                return type;
+            }
+
+            @Override
+            public Object[] getCreateDependencies() {
+                return getDependencies.get();
+            }
+
+            @Override
+            public Object doCreate(Object[] params) {
+                try {
+                    return constructor.newInstance(params);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            @Override
+            public void doInit(Object obj) {
+                initialization.accept(obj);
+            }
+        };
 
         // 获取id
         String id = type.isAnnotationPresent(Id.class)
@@ -77,10 +104,10 @@ public class AnnotationContainerFactory implements ContainerFactory {
         container.registerObject(id, factory);
     }
 
-    private static Supplier<Object> processCreate(Class<?> type, Container container) {
-        // 获取用于实例化对象的构造函数
+    private static Constructor<?> getConstructor(Class<?> type) {
         Constructor<?>[] constructors = type.getConstructors();
         Constructor<?> constructor;
+
         if (constructors.length == 1) {
             constructor = constructors[0];
         } else {
@@ -96,6 +123,10 @@ public class AnnotationContainerFactory implements ContainerFactory {
             }
         }
 
+        return constructor;
+    }
+
+    private static Supplier<Object[]> processDependencies(Constructor<?> constructor, Container container) {
         // 获取构造函数参数的注入类型
         Class<?>[] paramTypes = constructor.getParameterTypes();
 
@@ -110,8 +141,7 @@ public class AnnotationContainerFactory implements ContainerFactory {
             }
         }
 
-        // 返回实例化函数
-        Constructor<?> finalConstructor = constructor;
+        // 返回依赖获取函数
         return () -> {
             Object[] params = new Object[paramTypes.length];
             for (int i = 0; i < params.length; ++i) {
@@ -121,12 +151,7 @@ public class AnnotationContainerFactory implements ContainerFactory {
                     params[i] = container.getObject(paramTypes[i]);
                 }
             }
-
-            try {
-                return finalConstructor.newInstance(params);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            return params;
         };
     }
 
@@ -184,25 +209,36 @@ public class AnnotationContainerFactory implements ContainerFactory {
                 : null;
 
         // 创建对象工厂
-        ObjectFactory factory = ObjectFactory.of(() -> {
-            Object[] params = new Object[paramTypes.length];
-            for (int i = 0; i < params.length; ++i) {
-                if (paramIds[i] != null) {
-                    params[i] = container.getObject(paramIds[i]);
-                } else {
-                    params[i] = container.getObject(paramTypes[i]);
+        ObjectFactory factory = new ObjectFactory() {
+            @Override
+            public Class<?> getType() {
+                return method.getReturnType();
+            }
+
+            @Override
+            public Object[] getCreateDependencies() {
+                Object[] params = new Object[paramTypes.length];
+                for (int i = 0; i < params.length; ++i) {
+                    if (paramIds[i] != null) {
+                        params[i] = container.getObject(paramIds[i]);
+                    } else {
+                        params[i] = container.getObject(paramTypes[i]);
+                    }
+                }
+                return params;
+            }
+
+            @Override
+            public Object doCreate(Object[] params) {
+                Object instance = (instanceId == null) ? container.getObject(instanceType) : container.getObject(instanceId);
+                try {
+                    method.setAccessible(true);
+                    return method.invoke(instance, params);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
             }
-
-            Object instance = (instanceId == null) ? container.getObject(instanceType) : container.getObject(instanceId);
-
-            try {
-                method.setAccessible(true);
-                return method.invoke(instance, params);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }, method.getReturnType());
+        };
 
         // 获取id
         String id = method.isAnnotationPresent(Id.class)
