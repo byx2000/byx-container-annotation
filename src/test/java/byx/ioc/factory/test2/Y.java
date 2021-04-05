@@ -4,15 +4,15 @@ import byx.ioc.annotation.Autowire;
 import byx.ioc.annotation.Component;
 
 @Component
-public class B {
+public class Y {
     @Autowire
-    private A a;
+    private X x;
 
-    public B() {
-        Counter.c2++;
+    public Y() {
+        Counter.c5++;
     }
 
-    public A getA() {
-        return a;
+    public X getX() {
+        return x;
     }
 }

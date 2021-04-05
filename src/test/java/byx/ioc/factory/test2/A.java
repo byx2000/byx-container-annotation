@@ -8,6 +8,10 @@ public class A {
     @Autowire
     private B b;
 
+    public A() {
+        Counter.c1++;
+    }
+
     public B getB() {
         return b;
     }

@@ -8,6 +8,10 @@ public class C {
     @Autowire
     private C c;
 
+    public C() {
+        Counter.c3++;
+    }
+
     public C getC() {
         return c;
     }

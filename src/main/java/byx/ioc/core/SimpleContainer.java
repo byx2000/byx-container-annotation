@@ -16,11 +16,18 @@ import java.util.stream.Collectors;
  */
 public class SimpleContainer implements Container {
     /**
-     * 存储所有ObjectFactory，ObjectFactory封装了对象的实例化和初始化操作
+     * 存储所有ObjectFactory
      */
     private final Map<String, ObjectFactory> factories = new HashMap<>();
 
+    /**
+     * 一级缓存：存放已完全初始化的对象
+     */
     private final Map<String, Object> cache1 = new HashMap<>();
+
+    /**
+     * 二级缓存：存放已实例化对象的工厂，该工厂包含对已实例化对象的代理操作
+     */
     private final Map<String, Supplier<Object>> cache2 = new HashMap<>();
 
     /**
@@ -85,32 +92,12 @@ public class SimpleContainer implements Container {
      * 使用ObjectFactory创建对象
      */
     private Object createObject(String id, ObjectFactory factory) {
-        // 获取实例化的依赖
-        /*Object[] params = factory.getCreateDependencies();
-        // 如果当前对象已经在缓存里了，说明在上一步的实例化过程中已经创建了当前对象
-        // 所以此处直接返回缓存中的对象
-
-
-        // 实例化对象
-        Object obj;
-        obj = factory.doCreate(params);
-
-        if (cache.containsKey(id)) {
-            obj = cache.get(id);
-        }
-
-        // 将已实例化但未初始化的对象加入缓存
-        cache.put(id, obj);
-
-        // 初始化对象
-        factory.doInit(obj);
-
-        return obj;*/
-
+        // 查找一级缓存，如果找到则直接返回
         if (cache1.containsKey(id)) {
             return cache1.get(id);
         }
 
+        // 查找二级缓存，如果找到则调用get方法，然后把二级缓存移动到一级缓存
         if (cache2.containsKey(id)) {
             Object obj = cache2.get(id).get();
             cache2.remove(id);
@@ -118,8 +105,10 @@ public class SimpleContainer implements Container {
             return obj;
         }
 
+        // 获取对象实例化的依赖项
         Object[] params = factory.getCreateDependencies();
 
+        // 查找一级缓存和二级缓存，如果找到则直接返回
         if (cache1.containsKey(id)) {
             return cache1.get(id);
         }
@@ -130,9 +119,13 @@ public class SimpleContainer implements Container {
             return obj;
         }
 
+        // 实例化对象
         Object obj = factory.doCreate(params);
+
+        // 将实例化后的对象加入二级缓存
         cache2.put(id, () -> factory.doWrap(obj));
 
+        // 初始化对象
         factory.doInit(obj);
 
         return getObject(id);
