@@ -3,10 +3,7 @@ package byx.ioc.factory;
 import byx.ioc.annotation.Autowire;
 import byx.ioc.annotation.Component;
 import byx.ioc.annotation.Id;
-import byx.ioc.core.Container;
-import byx.ioc.core.ContainerFactory;
-import byx.ioc.core.ObjectFactory;
-import byx.ioc.core.SimpleContainer;
+import byx.ioc.core.*;
 import byx.ioc.exception.ConstructorMultiDefException;
 import byx.ioc.exception.ConstructorNotFoundException;
 import byx.ioc.util.ReflectUtils;
@@ -56,7 +53,7 @@ public class AnnotationContainerFactory implements ContainerFactory {
         Constructor<?> constructor = getConstructor(type);
 
         // 处理依赖解析
-        Supplier<Object[]> getDependencies = processDependencies(constructor, container);
+        Supplier<Dependency[]> getDependencies = processDependencies(constructor);
 
         // 处理初始化
         Consumer<Object> initialization = processInit(type, container);
@@ -76,7 +73,7 @@ public class AnnotationContainerFactory implements ContainerFactory {
             }
 
             @Override
-            public Object[] getCreateDependencies() {
+            public Dependency[] getCreateDependencies() {
                 return getDependencies.get();
             }
 
@@ -126,7 +123,7 @@ public class AnnotationContainerFactory implements ContainerFactory {
         return constructor;
     }
 
-    private static Supplier<Object[]> processDependencies(Constructor<?> constructor, Container container) {
+    private static Supplier<Dependency[]> processDependencies(Constructor<?> constructor) {
         // 获取构造函数参数的注入类型
         Class<?>[] paramTypes = constructor.getParameterTypes();
 
@@ -143,15 +140,15 @@ public class AnnotationContainerFactory implements ContainerFactory {
 
         // 返回依赖获取函数
         return () -> {
-            Object[] params = new Object[paramTypes.length];
-            for (int i = 0; i < params.length; ++i) {
+            Dependency[] dependencies = new Dependency[paramTypes.length];
+            for (int i = 0; i < dependencies.length; ++i) {
                 if (paramIds[i] != null) {
-                    params[i] = container.getObject(paramIds[i]);
+                    dependencies[i] = Dependency.id(paramIds[i]);
                 } else {
-                    params[i] = container.getObject(paramTypes[i]);
+                    dependencies[i] = Dependency.type(paramTypes[i]);
                 }
             }
-            return params;
+            return dependencies;
         };
     }
 
@@ -216,16 +213,16 @@ public class AnnotationContainerFactory implements ContainerFactory {
             }
 
             @Override
-            public Object[] getCreateDependencies() {
-                Object[] params = new Object[paramTypes.length];
-                for (int i = 0; i < params.length; ++i) {
+            public Dependency[] getCreateDependencies() {
+                Dependency[] dependencies = new Dependency[paramTypes.length];
+                for (int i = 0; i < dependencies.length; ++i) {
                     if (paramIds[i] != null) {
-                        params[i] = container.getObject(paramIds[i]);
+                        dependencies[i] = Dependency.id(paramIds[i]);
                     } else {
-                        params[i] = container.getObject(paramTypes[i]);
+                        dependencies[i] = Dependency.type(paramTypes[i]);
                     }
                 }
-                return params;
+                return dependencies;
             }
 
             @Override

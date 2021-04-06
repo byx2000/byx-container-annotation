@@ -1,9 +1,6 @@
 package byx.ioc.core;
 
-import byx.ioc.exception.IdDuplicatedException;
-import byx.ioc.exception.IdNotFoundException;
-import byx.ioc.exception.MultiTypeMatchException;
-import byx.ioc.exception.TypeNotFoundException;
+import byx.ioc.exception.*;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -89,6 +86,29 @@ public class SimpleContainer implements Container {
     }
 
     /**
+     * 创建依赖项
+     */
+    private Object createDependency(Dependency dependency) {
+        if (dependency.getId() != null) {
+            return getObject(dependency.getId());
+        } else if (dependency.getType() != null) {
+            return getObject(dependency.getType());
+        }
+        throw new BadDependencyException(dependency);
+    }
+
+    /**
+     * 创建依赖数组
+     */
+    private Object[] createDependencies(Dependency[] dependencies) {
+        Object[] params = new Object[dependencies.length];
+        for (int i = 0; i < dependencies.length; ++i) {
+            params[i] = createDependency(dependencies[i]);
+        }
+        return params;
+    }
+
+    /**
      * 使用ObjectFactory创建对象
      */
     private Object createObject(String id, ObjectFactory factory) {
@@ -105,8 +125,8 @@ public class SimpleContainer implements Container {
             return obj;
         }
 
-        // 获取对象实例化的依赖项
-        Object[] params = factory.getCreateDependencies();
+        // 获取并创建对象实例化的依赖项
+        Object[] params = createDependencies(factory.getCreateDependencies());
 
         // 查找一级缓存和二级缓存，如果找到则直接返回
         if (cache1.containsKey(id)) {

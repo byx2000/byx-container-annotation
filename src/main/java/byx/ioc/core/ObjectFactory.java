@@ -16,8 +16,8 @@ public interface ObjectFactory {
      * 获取实例化时的依赖项
      * @return 实例化过程中用到的参数数组
      */
-    default Object[] getCreateDependencies() {
-        return null;
+    default Dependency[] getCreateDependencies() {
+        return new Dependency[0];
     }
 
     /**

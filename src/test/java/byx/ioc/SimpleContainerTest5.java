@@ -1,6 +1,7 @@
 package byx.ioc;
 
 import byx.ioc.core.Container;
+import byx.ioc.core.Dependency;
 import byx.ioc.core.ObjectFactory;
 import byx.ioc.core.SimpleContainer;
 import org.junit.jupiter.api.Test;
@@ -41,8 +42,8 @@ public class SimpleContainerTest5 {
             }
 
             @Override
-            public Object[] getCreateDependencies() {
-                return new Object[]{container.getObject("b")};
+            public Dependency[] getCreateDependencies() {
+                return new Dependency[]{Dependency.id("b")};
             }
 
             @Override
@@ -96,8 +97,8 @@ public class SimpleContainerTest5 {
             }
 
             @Override
-            public Object[] getCreateDependencies() {
-                return new Object[]{container.getObject(B.class)};
+            public Dependency[] getCreateDependencies() {
+                return new Dependency[]{Dependency.type(B.class)};
             }
 
             @Override
@@ -151,8 +152,8 @@ public class SimpleContainerTest5 {
             }
 
             @Override
-            public Object[] getCreateDependencies() {
-                return new Object[]{container.getObject("b")};
+            public Dependency[] getCreateDependencies() {
+                return new Dependency[]{Dependency.id("b")};
             }
 
             @Override
@@ -206,8 +207,8 @@ public class SimpleContainerTest5 {
             }
 
             @Override
-            public Object[] getCreateDependencies() {
-                return new Object[]{container.getObject("b")};
+            public Dependency[] getCreateDependencies() {
+                return new Dependency[]{Dependency.id("b")};
             }
 
             @Override
