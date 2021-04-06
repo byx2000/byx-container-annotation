@@ -28,6 +28,11 @@ public class SimpleContainer implements Container {
     private final Map<String, Supplier<Object>> cache2 = new HashMap<>();
 
     /**
+     * 当第一次调用getObject方法之后，禁止再向容器中注册对象
+     */
+    private boolean freeze = false;
+
+    /**
      * 检查id是否重复
      */
     private void checkIdDuplicated(String id) {
@@ -45,18 +50,32 @@ public class SimpleContainer implements Container {
         }
     }
 
+    /**
+     * 第一次调用getObject方法时冻结整个容器，并检测循环依赖
+     */
+    private void checkCircularDependencyAndFreezeContainer() {
+
+        if (!freeze) {
+            checkRecursiveDependency();
+            freeze = true;
+        }
+    }
+
     @Override
     public void registerObject(String id, ObjectFactory factory) {
-        // 检查id是否重复
-        checkIdDuplicated(id);
-
-        // 添加ObjectFactory
-        factories.put(id, factory);
+        if (!freeze) {
+            // 检查id是否重复
+            checkIdDuplicated(id);
+            // 添加ObjectFactory
+            factories.put(id, factory);
+        }
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> T getObject(String id) {
+        checkCircularDependencyAndFreezeContainer();
+
         // 检查指定id的对象是否存在
         checkIdExist(id);
 
@@ -66,6 +85,8 @@ public class SimpleContainer implements Container {
 
     @Override
     public <T> T getObject(Class<T> type) {
+        checkCircularDependencyAndFreezeContainer();
+
         List<String> candidates = factories.keySet().stream()
                 .filter(id -> type.isAssignableFrom(factories.get(id).getType()))
                 .collect(Collectors.toList());
@@ -149,5 +170,93 @@ public class SimpleContainer implements Container {
         factory.doInit(obj);
 
         return getObject(id);
+    }
+
+    private String getTypeId(Class<?> type) {
+        List<String> candidates = factories.keySet().stream()
+                .filter(id -> type.isAssignableFrom(factories.get(id).getType()))
+                .collect(Collectors.toList());
+        if (candidates.size() != 1) {
+            return null;
+        }
+        return candidates.get(0);
+    }
+
+    private void checkRecursiveDependency() {
+        int n = factories.size();
+        boolean[][] adj = new boolean[n][n];
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                adj[i][j] = false;
+            }
+        }
+
+        List<String> ids = new ArrayList<>(factories.keySet());
+
+        for (int i = 0; i < n; ++i) {
+            String id = ids.get(i);
+            Dependency[] dependencies = factories.get(id).getCreateDependencies();
+            for (Dependency dep : dependencies) {
+                if (dep.getId() != null) {
+                    int j = ids.indexOf(dep.getId());
+                    adj[i][j] = true;
+                } else if (dep.getType() != null) {
+                    int j = ids.indexOf(getTypeId(dep.getType()));
+                    adj[i][j] = true;
+                } else {
+                    throw new BadDependencyException(dep);
+                }
+            }
+        }
+
+        /*System.out.println("-------------------------");
+        for (int i = 0; i < n; ++i) {
+            System.out.print(ids.get(i) + " ");
+        }
+        System.out.println();
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                System.out.print((adj[i][j] ? 1 : 0) + " ");
+            }
+            System.out.println();
+        }
+        System.out.println("-------------------------");*/
+
+        int[] in = new int[n];
+        Set<Integer> all = new HashSet<>();
+        List<Integer> ready = new ArrayList<>();
+        for (int i = 0; i < n; ++i) {
+            all.add(i);
+            in[i] = 0;
+        }
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                if (adj[i][j]) {
+                    in[j]++;
+                }
+            }
+        }
+        for (int i = 0; i < n; ++i) {
+            if (in[i] == 0) {
+                ready.add(i);
+            }
+        }
+
+        while (!ready.isEmpty()) {
+            int cur = ready.remove(0);
+            all.remove(cur);
+            for (int i = 0; i < n; ++i) {
+                if (adj[cur][i]) {
+                    in[i]--;
+                    if (in[i] == 0) {
+                        ready.add(i);
+                    }
+                }
+            }
+        }
+
+        if (!all.isEmpty()) {
+            throw new CircularDependencyException();
+        }
     }
 }
