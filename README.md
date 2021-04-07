@@ -1,6 +1,6 @@
 # ByxContainerAnnotation
 
-一个基于注解的轻量级IOC容器，模拟 Spring IOC，支持循环依赖处理。
+一个基于注解的轻量级IOC容器，模拟 Spring IOC，支持构造函数注入和字段注入，支持循环依赖处理和检测。
 
 ## Maven引入
 
@@ -505,5 +505,35 @@ public static void main(String[] args) {
     A a = container.getObject(A.class);
     B b = container.getObject(B.class);
     C c = container.getObject(C.class);
+}
+```
+
+无法解决的循环依赖：
+
+```java
+@Component
+public class A {
+    private final B b;
+
+    public A(B b) {
+        this.b = b;
+    }
+}
+
+@Component
+public class B {
+    private final A a;
+
+    public B(A a) {
+        this.a = a;
+    }
+}
+
+public static void main(String[] args) {
+    Container container = new AnnotationContainerFactory("byx.test").create();
+
+    // 抛出CircularDependencyException异常
+    A a = container.getObject(A.class);
+    B b = container.getObject(B.class);
 }
 ```
