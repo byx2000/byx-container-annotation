@@ -201,4 +201,87 @@ public class SimpleContainerTest20 {
         assertThrows(CircularDependencyException.class, () -> container.getObject(C.class));
         assertThrows(CircularDependencyException.class, () -> container.getObject(D.class));
     }
+
+    @Test
+    public void test3() {
+        Container container = new SimpleContainer();
+
+        ObjectFactory fa = new ObjectFactory() {
+            @Override
+            public Class<?> getType() {
+                return A.class;
+            }
+
+            @Override
+            public Dependency[] getCreateDependencies() {
+                return new Dependency[]{Dependency.id("c")};
+            }
+
+            @Override
+            public Object doCreate(Object[] params) {
+                return new A((C) params[0]);
+            }
+        };
+
+        ObjectFactory fb = new ObjectFactory() {
+            @Override
+            public Class<?> getType() {
+                return B.class;
+            }
+
+            @Override
+            public Dependency[] getCreateDependencies() {
+                return new Dependency[]{Dependency.id("c"), Dependency.id("d")};
+            }
+
+            @Override
+            public Object doCreate(Object[] params) {
+                return new B((C) params[0], (D) params[1]);
+            }
+        };
+
+        ObjectFactory fc = new ObjectFactory() {
+            @Override
+            public Class<?> getType() {
+                return C.class;
+            }
+
+            @Override
+            public Dependency[] getCreateDependencies() {
+                return new Dependency[]{Dependency.id("d")};
+            }
+
+            @Override
+            public Object doCreate(Object[] params) {
+                return new C((D) params[0]);
+            }
+        };
+
+        ObjectFactory fd = new ObjectFactory() {
+            @Override
+            public Class<?> getType() {
+                return D.class;
+            }
+
+            @Override
+            public Dependency[] getCreateDependencies() {
+                return new Dependency[]{Dependency.id("a")};
+            }
+
+            @Override
+            public Object doCreate(Object[] params) {
+                return new D((A) params[0]);
+            }
+        };
+
+        container.registerObject("a", fa);
+        container.registerObject("b", fb);
+        container.registerObject("c", fc);
+        container.registerObject("d", fd);
+
+        assertThrows(CircularDependencyException.class, () -> container.getObject("b"));
+        assertThrows(CircularDependencyException.class, () -> container.getObject("a"));
+        assertThrows(CircularDependencyException.class, () -> container.getObject("c"));
+        assertThrows(CircularDependencyException.class, () -> container.getObject("d"));
+    }
 }
