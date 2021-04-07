@@ -56,7 +56,7 @@ public class SimpleContainer implements Container {
     private void checkCircularDependencyAndFreezeContainer() {
 
         if (!freeze) {
-            checkRecursiveDependency();
+            checkCircularDependency();
             freeze = true;
         }
     }
@@ -182,7 +182,11 @@ public class SimpleContainer implements Container {
         return candidates.get(0);
     }
 
-    private void checkRecursiveDependency() {
+    /**
+     * 循环依赖检测
+     */
+    private void checkCircularDependency() {
+        // 初始化邻接表矩阵
         int n = factories.size();
         boolean[][] adj = new boolean[n][n];
         for (int i = 0; i < n; ++i) {
@@ -191,8 +195,10 @@ public class SimpleContainer implements Container {
             }
         }
 
+        // 获取容器中所有对象id
         List<String> ids = new ArrayList<>(factories.keySet());
 
+        // 构建对象的构造函数依赖图
         for (int i = 0; i < n; ++i) {
             String id = ids.get(i);
             Dependency[] dependencies = factories.get(id).getCreateDependencies();
@@ -209,19 +215,9 @@ public class SimpleContainer implements Container {
             }
         }
 
-        /*System.out.println("-------------------------");
-        for (int i = 0; i < n; ++i) {
-            System.out.print(ids.get(i) + " ");
-        }
-        System.out.println();
-        for (int i = 0; i < n; ++i) {
-            for (int j = 0; j < n; ++j) {
-                System.out.print((adj[i][j] ? 1 : 0) + " ");
-            }
-            System.out.println();
-        }
-        System.out.println("-------------------------");*/
-
+        // in存储所有节点的入度
+        // all集合存储当前还未排序的节点编号
+        // ready集合存储当前入度为0的节点
         int[] in = new int[n];
         Set<Integer> all = new HashSet<>();
         List<Integer> ready = new ArrayList<>();
@@ -242,6 +238,7 @@ public class SimpleContainer implements Container {
             }
         }
 
+        // 拓扑排序
         while (!ready.isEmpty()) {
             int cur = ready.remove(0);
             all.remove(cur);
@@ -255,8 +252,14 @@ public class SimpleContainer implements Container {
             }
         }
 
+        // 如果还有未排序的节点，说明依赖图中存在环路，即发生了循环依赖
         if (!all.isEmpty()) {
-            throw new CircularDependencyException();
+            // 获取构成循环依赖的对象id
+            List<String> circularIds = new ArrayList<>();
+            for (int i : all) {
+                circularIds.add(ids.get(i));
+            }
+            throw new CircularDependencyException(circularIds);
         }
     }
 }
