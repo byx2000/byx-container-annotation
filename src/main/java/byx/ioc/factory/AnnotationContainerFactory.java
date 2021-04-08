@@ -1,9 +1,11 @@
 package byx.ioc.factory;
 
+import byx.ioc.annotation.AdviceBy;
 import byx.ioc.annotation.Autowire;
 import byx.ioc.annotation.Component;
 import byx.ioc.annotation.Id;
 import byx.ioc.core.*;
+import byx.ioc.exception.ByxAopNotFoundException;
 import byx.ioc.exception.ConstructorMultiDefException;
 import byx.ioc.exception.ConstructorNotFoundException;
 import byx.ioc.util.ReflectUtils;
@@ -11,11 +13,13 @@ import byx.ioc.util.ReflectUtils;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -25,6 +29,8 @@ import java.util.function.Supplier;
  */
 public class AnnotationContainerFactory implements ContainerFactory {
     private final String packageName;
+
+    private static final String BYXAOP_CLASS_NAME = "byx.aop.ByxAOP";
 
     public AnnotationContainerFactory(String packageName) {
         this.packageName = packageName;
@@ -58,6 +64,9 @@ public class AnnotationContainerFactory implements ContainerFactory {
         // 处理初始化
         Consumer<Object> initialization = processInit(type, container);
 
+        // 处理AOP
+        Function<Object, Object> wrap = processWrap(type, container);
+
         // 处理方法
         for (Method method : type.getMethods()) {
             if (method.isAnnotationPresent(Component.class)) {
@@ -89,6 +98,11 @@ public class AnnotationContainerFactory implements ContainerFactory {
             @Override
             public void doInit(Object obj) {
                 initialization.accept(obj);
+            }
+
+            @Override
+            public Object doWrap(Object obj) {
+                return wrap.apply(obj);
             }
         };
 
@@ -244,5 +258,35 @@ public class AnnotationContainerFactory implements ContainerFactory {
 
         // 注册对象工厂
         container.registerObject(id, factory);
+    }
+
+    private static Method loadByxAopProxyMethod() {
+        try {
+            return Class.forName(BYXAOP_CLASS_NAME).getMethod("getAopProxy", Object.class, Object.class);
+        } catch (ClassNotFoundException | NoSuchMethodException e) {
+            throw new ByxAopNotFoundException();
+        }
+    }
+
+    private static Function<Object, Object> processWrap(Class<?> type, Container container) {
+        if (type.isAnnotationPresent(AdviceBy.class)) {
+            Class<?> adviceType = type.getAnnotation(AdviceBy.class).value();
+            Method method = loadByxAopProxyMethod();
+            return obj -> {
+                try {
+                    return method.invoke(null, obj, container.getObject(adviceType));
+                } catch (IllegalAccessException e) {
+                    throw new ByxAopNotFoundException();
+                } catch (InvocationTargetException e) {
+                    // 如果ByxAOP抛出了RuntimeException，则直接向外抛出
+                    if (e.getTargetException() instanceof RuntimeException) {
+                        throw (RuntimeException) e.getTargetException();
+                    } else {
+                        throw new ByxAopNotFoundException();
+                    }
+                }
+            };
+        }
+        return obj -> obj;
     }
 }
