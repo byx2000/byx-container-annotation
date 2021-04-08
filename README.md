@@ -537,3 +537,73 @@ public static void main(String[] args) {
     B b = container.getObject(B.class);
 }
 ```
+
+### AOP整合
+
+ByxContainerAnnotation支持整合ByxAOP功能，需要引入下列依赖：
+
+```xml
+<dependency>
+    <groupId>byx.aop</groupId>
+    <artifactId>ByxAOP</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+首先声明一个切面类：
+
+```java
+@Component
+public class Advice {
+    @Before
+    public void before() {
+        System.out.println("before");
+    }
+
+    @After
+    public void after() {
+        System.out.println("after");
+    }
+}
+```
+
+注意：切面类必须要标注`Component`注解。
+
+使用`AdviceBy`注解来为组件指定切面类：
+
+```java
+@Component
+@AdviceBy(Advice.class)
+public class A {
+    public void f() {
+        System.out.println("f");
+    }
+
+    public void g() {
+        System.out.println("g");
+    }
+}
+```
+
+主函数：
+
+```java
+public static void main(String[] args) {
+    Container container = new AnnotationContainerFactory("byx.test").create();
+    A a = container.getObject(A.class);
+    a.f();
+    a.g();
+}
+```
+
+运行主函数，控制台输出如下：
+
+```
+before
+f
+after
+g
+after
+```
+
+可以看到，`A`的`f`和`g`方法都被增强了。
