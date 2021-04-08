@@ -1,6 +1,6 @@
 # ByxContainerAnnotation
 
-一个基于注解的轻量级IOC容器，模拟 Spring IOC，支持构造函数注入和字段注入，支持循环依赖处理和检测。
+一个基于注解的轻量级IOC容器，模仿Spring IOC设计，支持构造函数注入和字段注入，支持循环依赖处理和检测，支持AOP。
 
 ## Maven引入
 
@@ -407,7 +407,9 @@ public static void main(String[] args) {
 }
 ```
 
-### 循环依赖
+## 循环依赖
+
+ByxContainerAnnotation支持各种循环依赖的处理和检测，以下是一些例子。
 
 一个对象的循环依赖：
 
@@ -538,7 +540,7 @@ public static void main(String[] args) {
 }
 ```
 
-### AOP整合
+## AOP整合
 
 ByxContainerAnnotation支持整合ByxAOP功能，需要引入下列依赖：
 
@@ -567,7 +569,7 @@ public class Advice {
 }
 ```
 
-注意：切面类必须要标注`Component`注解。
+注意，切面类必须要标注`Component`注解。
 
 使用`AdviceBy`注解来为组件指定切面类：
 
@@ -607,3 +609,5 @@ after
 ```
 
 可以看到，`A`的`f`和`g`方法都被增强了。
+
+关于切面类的编写，请看[ByxAOP](https://github.com/byx2000/ByxAOP)。
