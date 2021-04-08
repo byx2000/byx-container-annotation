@@ -13,7 +13,7 @@ public interface Container {
      * @param id id
      * @param factory 对象工厂
      */
-    void registerObject(String id, ObjectFactory factory);
+    void registerObject(String id, ObjectDefinition factory);
 
     /**
      * 获取指定id的对象

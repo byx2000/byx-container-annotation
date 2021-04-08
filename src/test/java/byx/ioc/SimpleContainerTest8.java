@@ -1,7 +1,7 @@
 package byx.ioc;
 
 import byx.ioc.core.Container;
-import byx.ioc.core.ObjectFactory;
+import byx.ioc.core.ObjectDefinition;
 import byx.ioc.core.SimpleContainer;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,14 +29,14 @@ public class SimpleContainerTest8 {
     public void test1() {
         Container container = new SimpleContainer();
 
-        ObjectFactory fa = new ObjectFactory() {
+        ObjectDefinition fa = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return A.class;
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 s += "c";
                 return new A();
             }
@@ -54,14 +54,14 @@ public class SimpleContainerTest8 {
             }
         };
 
-        ObjectFactory fb = new ObjectFactory() {
+        ObjectDefinition fb = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return B.class;
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new B();
             }
 
@@ -92,14 +92,14 @@ public class SimpleContainerTest8 {
     public void test2() {
         Container container = new SimpleContainer();
 
-        ObjectFactory fa = new ObjectFactory() {
+        ObjectDefinition fa = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return A.class;
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 s += "c";
                 return new A();
             }
@@ -117,14 +117,14 @@ public class SimpleContainerTest8 {
             }
         };
 
-        ObjectFactory fb = new ObjectFactory() {
+        ObjectDefinition fb = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return B.class;
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new B();
             }
 
@@ -155,14 +155,14 @@ public class SimpleContainerTest8 {
     public void test3() {
         Container container = new SimpleContainer();
 
-        ObjectFactory fa = new ObjectFactory() {
+        ObjectDefinition fa = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return A.class;
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 s += "c";
                 return new A();
             }
@@ -180,14 +180,14 @@ public class SimpleContainerTest8 {
             }
         };
 
-        ObjectFactory fb = new ObjectFactory() {
+        ObjectDefinition fb = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return B.class;
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new B();
             }
 

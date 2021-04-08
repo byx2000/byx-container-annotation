@@ -1,11 +1,11 @@
 package byx.ioc.core;
 
 /**
- * 对象工厂：封装对象实例化和初始化逻辑
+ * 封装对象实例化、初始化和包装逻辑
  *
  * @author byx
  */
-public interface ObjectFactory {
+public interface ObjectDefinition {
     /**
      * 对象类型
      * @return 类型
@@ -16,16 +16,16 @@ public interface ObjectFactory {
      * 获取实例化时的依赖项
      * @return 实例化过程中用到的参数数组
      */
-    default Dependency[] getCreateDependencies() {
+    default Dependency[] getInstanceDependencies() {
         return new Dependency[0];
     }
 
     /**
      * 实例化
-     * @param params getCreateDependencies返回的参数数组
+     * @param params 实例化依赖项
      * @return 实例化的对象
      */
-    Object doCreate(Object[] params);
+    Object getInstance(Object[] params);
 
     /**
      * 初始化

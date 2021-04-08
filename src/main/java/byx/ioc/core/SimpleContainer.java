@@ -13,9 +13,9 @@ import java.util.stream.Collectors;
  */
 public class SimpleContainer implements Container {
     /**
-     * 存储所有ObjectFactory
+     * 存储所有ObjectDefinition
      */
-    private final Map<String, ObjectFactory> factories = new HashMap<>();
+    private final Map<String, ObjectDefinition> definitions = new HashMap<>();
 
     /**
      * 一级缓存：存放已完全初始化的对象
@@ -36,7 +36,7 @@ public class SimpleContainer implements Container {
      * 检查id是否重复
      */
     private void checkIdDuplicated(String id) {
-        if (factories.containsKey(id)) {
+        if (definitions.containsKey(id)) {
             throw new IdDuplicatedException(id);
         }
     }
@@ -45,7 +45,7 @@ public class SimpleContainer implements Container {
      * 检查id是否存在
      */
     private void checkIdExist(String id) {
-        if (!factories.containsKey(id)) {
+        if (!definitions.containsKey(id)) {
             throw new IdNotFoundException(id);
         }
     }
@@ -62,12 +62,12 @@ public class SimpleContainer implements Container {
     }
 
     @Override
-    public void registerObject(String id, ObjectFactory factory) {
+    public void registerObject(String id, ObjectDefinition factory) {
         if (!freeze) {
             // 检查id是否重复
             checkIdDuplicated(id);
             // 添加ObjectFactory
-            factories.put(id, factory);
+            definitions.put(id, factory);
         }
     }
 
@@ -80,15 +80,15 @@ public class SimpleContainer implements Container {
         checkIdExist(id);
 
         // 如果缓存中没有，则通过ObjectFactory创建
-        return (T) createObject(id, factories.get(id));
+        return (T) createObject(id, definitions.get(id));
     }
 
     @Override
     public <T> T getObject(Class<T> type) {
         checkCircularDependencyAndFreezeContainer();
 
-        List<String> candidates = factories.keySet().stream()
-                .filter(id -> type.isAssignableFrom(factories.get(id).getType()))
+        List<String> candidates = definitions.keySet().stream()
+                .filter(id -> type.isAssignableFrom(definitions.get(id).getType()))
                 .collect(Collectors.toList());
 
         if (candidates.size() == 0) {
@@ -103,7 +103,7 @@ public class SimpleContainer implements Container {
 
     @Override
     public Set<String> getObjectIds() {
-        return factories.keySet();
+        return definitions.keySet();
     }
 
     /**
@@ -132,7 +132,7 @@ public class SimpleContainer implements Container {
     /**
      * 使用ObjectFactory创建对象
      */
-    private Object createObject(String id, ObjectFactory factory) {
+    private Object createObject(String id, ObjectDefinition factory) {
         // 查找一级缓存，如果找到则直接返回
         if (cache1.containsKey(id)) {
             return cache1.get(id);
@@ -147,7 +147,7 @@ public class SimpleContainer implements Container {
         }
 
         // 获取并创建对象实例化的依赖项
-        Object[] params = createDependencies(factory.getCreateDependencies());
+        Object[] params = createDependencies(factory.getInstanceDependencies());
 
         // 查找一级缓存和二级缓存，如果找到则直接返回
         if (cache1.containsKey(id)) {
@@ -161,7 +161,7 @@ public class SimpleContainer implements Container {
         }
 
         // 实例化对象
-        Object obj = factory.doCreate(params);
+        Object obj = factory.getInstance(params);
 
         // 将实例化后的对象加入二级缓存
         cache2.put(id, () -> factory.doWrap(obj));
@@ -173,8 +173,8 @@ public class SimpleContainer implements Container {
     }
 
     private String getTypeId(Class<?> type) {
-        List<String> candidates = factories.keySet().stream()
-                .filter(id -> type.isAssignableFrom(factories.get(id).getType()))
+        List<String> candidates = definitions.keySet().stream()
+                .filter(id -> type.isAssignableFrom(definitions.get(id).getType()))
                 .collect(Collectors.toList());
         if (candidates.size() != 1) {
             return null;
@@ -187,7 +187,7 @@ public class SimpleContainer implements Container {
      */
     private void checkCircularDependency() {
         // 初始化邻接表矩阵
-        int n = factories.size();
+        int n = definitions.size();
         boolean[][] adj = new boolean[n][n];
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < n; ++j) {
@@ -196,12 +196,12 @@ public class SimpleContainer implements Container {
         }
 
         // 获取容器中所有对象id
-        List<String> ids = new ArrayList<>(factories.keySet());
+        List<String> ids = new ArrayList<>(definitions.keySet());
 
         // 构建对象的构造函数依赖图
         for (int i = 0; i < n; ++i) {
             String id = ids.get(i);
-            Dependency[] dependencies = factories.get(id).getCreateDependencies();
+            Dependency[] dependencies = definitions.get(id).getInstanceDependencies();
             for (Dependency dep : dependencies) {
                 if (dep.getId() != null) {
                     int j = ids.indexOf(dep.getId());

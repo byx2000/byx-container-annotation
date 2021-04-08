@@ -2,7 +2,7 @@ package byx.ioc;
 
 import byx.ioc.core.Container;
 import byx.ioc.core.Dependency;
-import byx.ioc.core.ObjectFactory;
+import byx.ioc.core.ObjectDefinition;
 import byx.ioc.core.SimpleContainer;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,31 +40,31 @@ public class SimpleContainerTest14 {
     public void test1() {
         Container container = new SimpleContainer();
 
-        ObjectFactory fa = new ObjectFactory() {
+        ObjectDefinition fa = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return A.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.id("b")};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new A((B) params[0]);
             }
         };
 
-        ObjectFactory fb = new ObjectFactory() {
+        ObjectDefinition fb = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return B.class;
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new B();
             }
 
@@ -74,19 +74,19 @@ public class SimpleContainerTest14 {
             }
         };
 
-        ObjectFactory fc = new ObjectFactory() {
+        ObjectDefinition fc = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return C.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.id("a")};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new C((A) params[0]);
             }
         };
@@ -113,31 +113,31 @@ public class SimpleContainerTest14 {
     public void test2() {
         Container container = new SimpleContainer();
 
-        ObjectFactory fa = new ObjectFactory() {
+        ObjectDefinition fa = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return A.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.id("b")};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new A((B) params[0]);
             }
         };
 
-        ObjectFactory fb = new ObjectFactory() {
+        ObjectDefinition fb = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return B.class;
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new B();
             }
 
@@ -147,19 +147,19 @@ public class SimpleContainerTest14 {
             }
         };
 
-        ObjectFactory fc = new ObjectFactory() {
+        ObjectDefinition fc = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return C.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.id("a")};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new C((A) params[0]);
             }
         };
@@ -186,31 +186,31 @@ public class SimpleContainerTest14 {
     public void test3() {
         Container container = new SimpleContainer();
 
-        ObjectFactory fa = new ObjectFactory() {
+        ObjectDefinition fa = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return A.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.type(B.class)};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new A((B) params[0]);
             }
         };
 
-        ObjectFactory fb = new ObjectFactory() {
+        ObjectDefinition fb = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return B.class;
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new B();
             }
 
@@ -220,19 +220,19 @@ public class SimpleContainerTest14 {
             }
         };
 
-        ObjectFactory fc = new ObjectFactory() {
+        ObjectDefinition fc = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return C.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.type(A.class)};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new C((A) params[0]);
             }
         };
@@ -259,31 +259,31 @@ public class SimpleContainerTest14 {
     public void test4() {
         Container container = new SimpleContainer();
 
-        ObjectFactory fa = new ObjectFactory() {
+        ObjectDefinition fa = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return A.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.type(B.class)};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new A((B) params[0]);
             }
         };
 
-        ObjectFactory fb = new ObjectFactory() {
+        ObjectDefinition fb = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return B.class;
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new B();
             }
 
@@ -293,19 +293,19 @@ public class SimpleContainerTest14 {
             }
         };
 
-        ObjectFactory fc = new ObjectFactory() {
+        ObjectDefinition fc = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return C.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.id("a")};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new C((A) params[0]);
             }
         };

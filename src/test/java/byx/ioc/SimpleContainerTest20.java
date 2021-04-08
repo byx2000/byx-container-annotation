@@ -2,7 +2,7 @@ package byx.ioc;
 
 import byx.ioc.core.Container;
 import byx.ioc.core.Dependency;
-import byx.ioc.core.ObjectFactory;
+import byx.ioc.core.ObjectDefinition;
 import byx.ioc.core.SimpleContainer;
 import byx.ioc.exception.CircularDependencyException;
 import org.junit.jupiter.api.Test;
@@ -40,70 +40,70 @@ public class SimpleContainerTest20 {
     public void test1() {
         Container container = new SimpleContainer();
 
-        ObjectFactory fa = new ObjectFactory() {
+        ObjectDefinition fa = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return A.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.id("c")};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new A((C) params[0]);
             }
         };
 
-        ObjectFactory fb = new ObjectFactory() {
+        ObjectDefinition fb = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return B.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.id("c"), Dependency.id("d")};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new B((C) params[0], (D) params[1]);
             }
         };
 
-        ObjectFactory fc = new ObjectFactory() {
+        ObjectDefinition fc = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return C.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.id("d")};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new C((D) params[0]);
             }
         };
 
-        ObjectFactory fd = new ObjectFactory() {
+        ObjectDefinition fd = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return D.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.id("a")};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new D((A) params[0]);
             }
         };
@@ -123,70 +123,70 @@ public class SimpleContainerTest20 {
     public void test2() {
         Container container = new SimpleContainer();
 
-        ObjectFactory fa = new ObjectFactory() {
+        ObjectDefinition fa = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return A.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.type(C.class)};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new A((C) params[0]);
             }
         };
 
-        ObjectFactory fb = new ObjectFactory() {
+        ObjectDefinition fb = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return B.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.type(C.class), Dependency.type(D.class)};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new B((C) params[0], (D) params[1]);
             }
         };
 
-        ObjectFactory fc = new ObjectFactory() {
+        ObjectDefinition fc = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return C.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.type(D.class)};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new C((D) params[0]);
             }
         };
 
-        ObjectFactory fd = new ObjectFactory() {
+        ObjectDefinition fd = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return D.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.type(A.class)};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new D((A) params[0]);
             }
         };
@@ -206,70 +206,70 @@ public class SimpleContainerTest20 {
     public void test3() {
         Container container = new SimpleContainer();
 
-        ObjectFactory fa = new ObjectFactory() {
+        ObjectDefinition fa = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return A.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.id("c")};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new A((C) params[0]);
             }
         };
 
-        ObjectFactory fb = new ObjectFactory() {
+        ObjectDefinition fb = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return B.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.id("c"), Dependency.id("d")};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new B((C) params[0], (D) params[1]);
             }
         };
 
-        ObjectFactory fc = new ObjectFactory() {
+        ObjectDefinition fc = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return C.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.id("d")};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new C((D) params[0]);
             }
         };
 
-        ObjectFactory fd = new ObjectFactory() {
+        ObjectDefinition fd = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return D.class;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return new Dependency[]{Dependency.id("a")};
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return new D((A) params[0]);
             }
         };

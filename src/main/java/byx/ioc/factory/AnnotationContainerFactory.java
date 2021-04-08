@@ -30,7 +30,8 @@ import java.util.function.Supplier;
 public class AnnotationContainerFactory implements ContainerFactory {
     private final String packageName;
 
-    private static final String BYXAOP_CLASS_NAME = "byx.aop.ByxAOP";
+    private static final String AOP_PROXY_CREATOR = "byx.aop.ByxAOP";
+    private static final String AOP_PROXY_CREATOR_METHOD = "getAopProxy";
 
     public AnnotationContainerFactory(String packageName) {
         this.packageName = packageName;
@@ -75,19 +76,19 @@ public class AnnotationContainerFactory implements ContainerFactory {
         }
 
         // 创建对象工厂
-        ObjectFactory factory = new ObjectFactory() {
+        ObjectDefinition factory = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return type;
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 return getDependencies.get();
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 try {
                     return constructor.newInstance(params);
                 } catch (Exception e) {
@@ -220,14 +221,14 @@ public class AnnotationContainerFactory implements ContainerFactory {
                 : null;
 
         // 创建对象工厂
-        ObjectFactory factory = new ObjectFactory() {
+        ObjectDefinition factory = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return method.getReturnType();
             }
 
             @Override
-            public Dependency[] getCreateDependencies() {
+            public Dependency[] getInstanceDependencies() {
                 Dependency[] dependencies = new Dependency[paramTypes.length];
                 for (int i = 0; i < dependencies.length; ++i) {
                     if (paramIds[i] != null) {
@@ -240,7 +241,7 @@ public class AnnotationContainerFactory implements ContainerFactory {
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 Object instance = (instanceId == null) ? container.getObject(instanceType) : container.getObject(instanceId);
                 try {
                     method.setAccessible(true);
@@ -262,7 +263,7 @@ public class AnnotationContainerFactory implements ContainerFactory {
 
     private static Method loadByxAopProxyMethod() {
         try {
-            return Class.forName(BYXAOP_CLASS_NAME).getMethod("getAopProxy", Object.class, Object.class);
+            return Class.forName(AOP_PROXY_CREATOR).getMethod(AOP_PROXY_CREATOR_METHOD, Object.class, Object.class);
         } catch (ClassNotFoundException | NoSuchMethodException e) {
             throw new ByxAopNotFoundException();
         }

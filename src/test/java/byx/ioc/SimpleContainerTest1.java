@@ -1,7 +1,7 @@
 package byx.ioc;
 
 import byx.ioc.core.Container;
-import byx.ioc.core.ObjectFactory;
+import byx.ioc.core.ObjectDefinition;
 import byx.ioc.core.SimpleContainer;
 import byx.ioc.exception.IdDuplicatedException;
 import byx.ioc.exception.IdNotFoundException;
@@ -20,50 +20,50 @@ public class SimpleContainerTest1 {
      */
     @Test
     public void test1() {
-        ObjectFactory f1 = new ObjectFactory() {
+        ObjectDefinition f1 = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return String.class;
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return "hello";
             }
         };
 
-        ObjectFactory f2 = new ObjectFactory() {
+        ObjectDefinition f2 = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return Integer.class;
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return 123;
             }
         };
 
-        ObjectFactory f3 = new ObjectFactory() {
+        ObjectDefinition f3 = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return Double.class;
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return 3.14;
             }
         };
 
-        ObjectFactory f4 = new ObjectFactory() {
+        ObjectDefinition f4 = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return Double.class;
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return 6.28;
             }
         };
@@ -99,14 +99,14 @@ public class SimpleContainerTest1 {
     public void test2() {
         Container container = new SimpleContainer();
 
-        ObjectFactory f = new ObjectFactory() {
+        ObjectDefinition f = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return String.class;
             }
 
             @Override
-            public Object doCreate(Object[] params) {
+            public Object getInstance(Object[] params) {
                 return "hello";
             }
         };
