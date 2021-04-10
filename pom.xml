@@ -32,7 +32,7 @@
         </dependency>
         <dependency>
             <groupId>byx.aop</groupId>
-            <artifactId>ByxAOP</artifactId>
+            <artifactId>byx-aop</artifactId>
             <version>1.0.0</version>
             <scope>test</scope>
         </dependency>
