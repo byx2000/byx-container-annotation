@@ -548,7 +548,7 @@ ByxContainerAnnotation支持整合ByxAOP功能，需要引入下列依赖：
 ```xml
 <dependency>
     <groupId>byx.aop</groupId>
-    <artifactId>ByxAOP</artifactId>
+    <artifactId>byx-aop</artifactId>
     <version>1.0.0</version>
 </dependency>
 ```
