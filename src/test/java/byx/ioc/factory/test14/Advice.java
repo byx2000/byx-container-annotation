@@ -2,14 +2,14 @@ package byx.ioc.factory.test14;
 
 import byx.aop.annotation.After;
 import byx.aop.annotation.Before;
-import byx.aop.annotation.WithName;
+import byx.aop.annotation.Filter;
 import byx.ioc.annotation.Component;
 import byx.ioc.factory.Flag;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Component
 public class Advice {
-    @Before @WithName("f")
+    @Before @Filter(name = "f")
     public int[] before(int n) {
         Flag.f1 = true;
         assertEquals(123, n);
