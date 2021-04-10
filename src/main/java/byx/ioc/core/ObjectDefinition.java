@@ -1,7 +1,7 @@
 package byx.ioc.core;
 
 /**
- * 封装对象实例化、初始化和包装逻辑
+ * 封装对象实例化、初始化和包装（代理）逻辑
  *
  * @author byx
  */
@@ -14,7 +14,8 @@ public interface ObjectDefinition {
 
     /**
      * 获取实例化时的依赖项
-     * @return 实例化过程中用到的参数数组
+     * @return 依赖项数组
+     * @see Dependency
      */
     default Dependency[] getInstanceDependencies() {
         return new Dependency[0];
@@ -36,7 +37,7 @@ public interface ObjectDefinition {
     }
 
     /**
-     * 包装对象
+     * 包装对象（代理）
      * @param obj 初始化后的对象
      * @return 包装后的对象
      */

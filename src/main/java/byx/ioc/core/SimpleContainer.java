@@ -23,7 +23,9 @@ public class SimpleContainer implements Container {
     private final Map<String, Object> cache1 = new HashMap<>();
 
     /**
-     * 二级缓存：存放已实例化对象的工厂，该工厂包含对已实例化对象的代理操作
+     * 二级缓存：存放已实例化对象的工厂
+     * 该工厂包含对已实例化对象的代理操作
+     * 通过调用ObjectDefinition的doWrap方法
      */
     private final Map<String, Supplier<Object>> cache2 = new HashMap<>();
 
@@ -54,7 +56,6 @@ public class SimpleContainer implements Container {
      * 第一次调用getObject方法时冻结整个容器，并检测循环依赖
      */
     private void checkCircularDependencyAndFreezeContainer() {
-
         if (!freeze) {
             checkCircularDependency();
             freeze = true;
@@ -62,12 +63,10 @@ public class SimpleContainer implements Container {
     }
 
     @Override
-    public void registerObject(String id, ObjectDefinition factory) {
+    public void registerObject(String id, ObjectDefinition definition) {
         if (!freeze) {
-            // 检查id是否重复
             checkIdDuplicated(id);
-            // 添加ObjectFactory
-            definitions.put(id, factory);
+            definitions.put(id, definition);
         }
     }
 
@@ -75,18 +74,12 @@ public class SimpleContainer implements Container {
     @SuppressWarnings("unchecked")
     public <T> T getObject(String id) {
         checkCircularDependencyAndFreezeContainer();
-
-        // 检查指定id的对象是否存在
         checkIdExist(id);
-
-        // 如果缓存中没有，则通过ObjectFactory创建
-        return (T) createObject(id, definitions.get(id));
+        return (T) createOrGetObject(id, definitions.get(id));
     }
 
     @Override
     public <T> T getObject(Class<T> type) {
-        checkCircularDependencyAndFreezeContainer();
-
         List<String> candidates = definitions.keySet().stream()
                 .filter(id -> type.isAssignableFrom(definitions.get(id).getType()))
                 .collect(Collectors.toList());
@@ -99,6 +92,15 @@ public class SimpleContainer implements Container {
         }
 
         return getObject(candidates.get(0));
+    }
+
+    @Override
+    public <T> T getObject(String id, Class<T> type) {
+        Object obj = getObject(id);
+        if (!type.isAssignableFrom(obj.getClass())) {
+            throw new TypeNotFoundException(type);
+        }
+        return type.cast(obj);
     }
 
     @Override
@@ -130,9 +132,23 @@ public class SimpleContainer implements Container {
     }
 
     /**
-     * 使用ObjectFactory创建对象
+     * 创建/获取容器中的对象
+     * 循环依赖处理的核心算法
+     *
+     * 对象创建步骤：
+     * 1. 查找一级缓存，如果找到则直接返回
+     * 2. 查找二级缓存，如果找到，则取出对象工厂，执行代理操作，然后把代理后的对象移入一级缓存，
+     *    并返回代理后的对象
+     * 3. 如果两级缓存都没找到，说明对象是第一次创建，依次执行下面的步骤：
+     *      1) 调用ObjectDefinition的getInstanceDependencies方法，获取对象实例化所需的依赖项
+     *      2) 递归调用Container的getObject方法创建依赖项
+     *      3) 调用ObjectDefinition的getInstance方法创建对象实例
+     *      4) 使用对象工厂包装刚刚创建的对象实例，工厂内部调用ObjectDefinition的doWrap方法创建代理
+     *      5) 把对象工厂放入二级缓存
+     *      6) 调用ObjectDefinition的doInit方法初始化对象（属性填充）
+     *      7) 再次尝试从缓存中获取对象，这次一定能够获取到
      */
-    private Object createObject(String id, ObjectDefinition factory) {
+    private Object createOrGetObject(String id, ObjectDefinition definition) {
         // 查找一级缓存，如果找到则直接返回
         if (cache1.containsKey(id)) {
             return cache1.get(id);
@@ -147,7 +163,7 @@ public class SimpleContainer implements Container {
         }
 
         // 获取并创建对象实例化的依赖项
-        Object[] params = createDependencies(factory.getInstanceDependencies());
+        Object[] params = createDependencies(definition.getInstanceDependencies());
 
         // 查找一级缓存和二级缓存，如果找到则直接返回
         if (cache1.containsKey(id)) {
@@ -161,15 +177,15 @@ public class SimpleContainer implements Container {
         }
 
         // 实例化对象
-        Object obj = factory.getInstance(params);
+        Object obj = definition.getInstance(params);
 
         // 将实例化后的对象加入二级缓存
-        cache2.put(id, () -> factory.doWrap(obj));
+        cache2.put(id, () -> definition.doWrap(obj));
 
         // 初始化对象
-        factory.doInit(obj);
+        definition.doInit(obj);
 
-        return getObject(id);
+        return createOrGetObject(id, definition);
     }
 
     private String getTypeId(Class<?> type) {
@@ -184,6 +200,12 @@ public class SimpleContainer implements Container {
 
     /**
      * 循环依赖检测
+     *
+     * 步骤：
+     * 1. 调用容器中所有ObjectDefinition的getInstanceDependencies，获取所有对象的实例化依赖项，
+     *    将依赖关系转换成一张有向图
+     * 2. 使用拓扑排序的顺序依次删除图中的节点，直到不能再删为止
+     * 3. 如果还存在未删除的节点，说明依赖图中存在环路，即产生了循环依赖
      */
     private void checkCircularDependency() {
         // 初始化邻接表矩阵
@@ -238,7 +260,7 @@ public class SimpleContainer implements Container {
             }
         }
 
-        // 拓扑排序
+        // 按照拓扑排序的顺序删除节点
         while (!ready.isEmpty()) {
             int cur = ready.remove(0);
             all.remove(cur);

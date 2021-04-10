@@ -78,7 +78,13 @@ public class SimpleContainerTest1 {
         String s = container.getObject(String.class);
         assertEquals("hello", s);
 
+        s = container.getObject("f1", String.class);
+        assertEquals("hello", s);
+
         Integer i = container.getObject(Integer.class);
+        assertEquals(123, i);
+
+        i = container.getObject("f2", Integer.class);
         assertEquals(123, i);
 
         String s2 = container.getObject("f1");
@@ -90,6 +96,8 @@ public class SimpleContainerTest1 {
         assertThrows(IdNotFoundException.class, () -> container.getObject("f5"));
         assertThrows(TypeNotFoundException.class, () -> container.getObject(Boolean.class));
         assertThrows(MultiTypeMatchException.class, () -> container.getObject(Double.class));
+        assertThrows(IdNotFoundException.class, () -> container.getObject("aaa", String.class));
+        assertThrows(TypeNotFoundException.class, () -> container.getObject("f1", Integer.class));
     }
 
     /**

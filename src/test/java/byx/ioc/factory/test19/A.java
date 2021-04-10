@@ -1,7 +1,7 @@
 package byx.ioc.factory.test19;
 
 import byx.ioc.annotation.AdviceBy;
-import byx.ioc.annotation.Autowire;
+import byx.ioc.annotation.Autowired;
 import byx.ioc.annotation.Component;
 
 @Component
@@ -11,7 +11,7 @@ public class A {
 
     public A() {}
 
-    @Autowire
+    @Autowired
     public A(B b) {
         this.b = b;
     }

@@ -1,18 +1,18 @@
 package byx.ioc.factory.test12;
 
-import byx.ioc.annotation.Autowire;
+import byx.ioc.annotation.Autowired;
 import byx.ioc.annotation.Component;
 import byx.ioc.factory.Counter;
 
 @Component
 public class D {
-    @Autowire
+    @Autowired
     private A a;
 
-    @Autowire
+    @Autowired
     private B b;
 
-    @Autowire
+    @Autowired
     private C c;
 
     public D() {

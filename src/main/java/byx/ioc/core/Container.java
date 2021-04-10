@@ -19,7 +19,7 @@ public interface Container {
      * 获取指定id的对象
      * @param id id
      * @param <T> 对象类型
-     * @return 对象
+     * @return 对象实例
      */
     <T> T getObject(String id);
 
@@ -27,9 +27,18 @@ public interface Container {
      * 获取指定类型的对象
      * @param type 对象类型
      * @param <T> 对象类型
-     * @return 对象
+     * @return 对象实例
      */
     <T> T getObject(Class<T> type);
+
+    /**
+     * 获取指定id和类型的对象
+     * @param id id
+     * @param type 对象类型
+     * @param <T> 对象类型
+     * @return 对象实例
+     */
+    <T> T getObject(String id, Class<T> type);
 
     /**
      * 获取容器中所有对象id的集合

@@ -31,12 +31,13 @@ A.java：
 ```java
 package byx.test;
 
-import byx.ioc.annotation.Autowire;
+import byx.ioc.annotation.Autowired;
+import byx.ioc.annotation.Autowired;
 import byx.ioc.annotation.Component;
 
 @Component
 public class A {
-    @Autowire
+    @Autowired
     private B b;
 
     public void f() {
@@ -318,16 +319,16 @@ public static void main(String[] args) {
 
 注意，不允许同时在多个构造函数上标注`@Autowire`注解。
 
-### @Autowire自动装配
+### @Autowired自动装配
 
-`@Autowire`注解标注在对象中的字段上，用于自动装配对象的字段。
+`@Autowired`注解标注在对象中的字段上，用于自动装配对象的字段。
 
 例子：
 
 ```java
 @Component
 public class A {
-    @Autowire
+    @Autowired
     private B b;
 }
 
@@ -342,14 +343,14 @@ public static void main(String[] args) {
 }
 ```
 
-默认情况下，`@Autowire`按照类型注入。`@Autowire`也可以配合`@Id`一起使用，实现按照id注入。
+默认情况下，`@Autowired`按照类型注入。`@Autowired`也可以配合`@Id`一起使用，实现按照id注入。
 
 例子：
 
 ```java
 @Component
 public class A {
-    @Autowire @Id("b1")
+    @Autowired @Id("b1")
     private B b;
 }
 
@@ -369,7 +370,7 @@ public static void main(String[] args) {
 }
 ```
 
-`@Autowire`还可标注在构造函数上，请看[构造函数注入](#构造函数注入)。
+`@Autowired`还可标注在构造函数上，请看[构造函数注入](#构造函数注入)。
 
 ### 方法参数注入
 
@@ -416,7 +417,7 @@ ByxContainerAnnotation支持各种循环依赖的处理和检测，以下是一�
 ```java
 @Component
 public class A {
-    @Autowire
+    @Autowired
     private A a;
 }
 
@@ -433,13 +434,13 @@ public static void main(String[] args) {
 ```java
 @Component
 public class A {
-    @Autowire
+    @Autowired
     private B b;
 }
 
 @Component
 public class B {
-    @Autowire
+    @Autowired
     private A a;
 }
 
@@ -466,7 +467,7 @@ public class A {
 
 @Component
 public class B {
-    @Autowire
+    @Autowired
     private A a;
 }
 
@@ -484,19 +485,19 @@ public static void main(String[] args) {
 ```java
 @Component
 public class A {
-    @Autowire
+    @Autowired
     private B b;
 }
 
 @Component
 public class B {
-    @Autowire
+    @Autowired
     private C c;
 }
 
 @Component
 public class C {
-    @Autowire
+    @Autowired
     private A a;
 }
 
@@ -604,6 +605,7 @@ public static void main(String[] args) {
 before
 f
 after
+before
 g
 after
 ```

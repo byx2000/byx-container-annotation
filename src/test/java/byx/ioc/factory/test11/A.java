@@ -1,14 +1,14 @@
 package byx.ioc.factory.test11;
 
-import byx.ioc.annotation.Autowire;
+import byx.ioc.annotation.Autowired;
 import byx.ioc.annotation.Component;
 
 @Component
 public class A {
-    @Autowire
+    @Autowired
     private B b;
 
-    @Autowire
+    @Autowired
     private C c;
 
     public B getB() {

@@ -1,7 +1,7 @@
 package byx.ioc.factory;
 
 import byx.ioc.annotation.AdviceBy;
-import byx.ioc.annotation.Autowire;
+import byx.ioc.annotation.Autowired;
 import byx.ioc.annotation.Component;
 import byx.ioc.annotation.Id;
 import byx.ioc.core.*;
@@ -23,29 +23,44 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * ContainerFactory的实现类：通过扫描注解来创建IOC容器
+ * ContainerFactory的实现类：通过注解扫描来创建IOC容器
  *
  * @author byx
  */
 public class AnnotationContainerFactory implements ContainerFactory {
-    private final String packageName;
+    /**
+     * 基准包名
+     */
+    private final String basePackage;
 
+    /**
+     * ByxAOP工具类的全限定类名
+     */
     private static final String AOP_PROXY_CREATOR = "byx.aop.ByxAOP";
+
+    /**
+     * ByxAOP中用于创建代理对象的方法名
+     */
     private static final String AOP_PROXY_CREATOR_METHOD = "getAopProxy";
 
-    public AnnotationContainerFactory(String packageName) {
-        this.packageName = packageName;
+    /**
+     * 创建一个AnnotationContainerFactory
+     * 扫描basePackage包及其子包下的所有类
+     * @param basePackage 基准包名
+     */
+    public AnnotationContainerFactory(String basePackage) {
+        this.basePackage = basePackage;
     }
 
     @Override
     public Container create() {
         // 获取包下的所有类
-        List<Class<?>> classes = ReflectUtils.getPackageClasses(packageName);
+        List<Class<?>> classes = ReflectUtils.getPackageClasses(basePackage);
 
         // 创建容器
         Container container = new SimpleContainer();
 
-        // 扫描包下所有类
+        // 扫描包下所有类，并解析注解
         for (Class<?> c : classes) {
             if (c.isAnnotationPresent(Component.class)) {
                 processClass(c, container);
@@ -75,8 +90,8 @@ public class AnnotationContainerFactory implements ContainerFactory {
             }
         }
 
-        // 创建对象工厂
-        ObjectDefinition factory = new ObjectDefinition() {
+        // 创建ObjectDefinition
+        ObjectDefinition definition = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return type;
@@ -112,19 +127,25 @@ public class AnnotationContainerFactory implements ContainerFactory {
                 ? type.getAnnotation(Id.class).value()
                 : type.getCanonicalName();
 
-        // 注册对象工厂
-        container.registerObject(id, factory);
+        // 注册对象
+        container.registerObject(id, definition);
     }
 
+    /**
+     * 获取用于对象实例化的构造函数
+     */
     private static Constructor<?> getConstructor(Class<?> type) {
         Constructor<?>[] constructors = type.getConstructors();
         Constructor<?> constructor;
 
+        // 如果只有唯一的构造方法，则直接使用这个构造方法
+        // 如果有多个构造方法，则使用标注了Autowired注解的构造方法
+        // 其它情况则报错
         if (constructors.length == 1) {
             constructor = constructors[0];
         } else {
             constructors = Arrays.stream(constructors)
-                    .filter(c -> c.isAnnotationPresent(Autowire.class))
+                    .filter(c -> c.isAnnotationPresent(Autowired.class))
                     .toArray(Constructor[]::new);
             if (constructors.length == 0) {
                 throw new ConstructorNotFoundException(type);
@@ -138,6 +159,9 @@ public class AnnotationContainerFactory implements ContainerFactory {
         return constructor;
     }
 
+    /**
+     * 构造函数依赖项的获取
+     */
     private static Supplier<Dependency[]> processDependencies(Constructor<?> constructor) {
         // 获取构造函数参数的注入类型
         Class<?>[] paramTypes = constructor.getParameterTypes();
@@ -167,12 +191,15 @@ public class AnnotationContainerFactory implements ContainerFactory {
         };
     }
 
+    /**
+     * 处理对象初始化逻辑
+     */
     private static Consumer<Object> processInit(Class<?> type, Container container) {
         // 获取所有需要被赋值的字段
         List<Field> autoWireFields = new ArrayList<>();
         List<String> autoWireIds = new ArrayList<>();
         for (Field field : type.getDeclaredFields()) {
-            if (field.isAnnotationPresent(Autowire.class)) {
+            if (field.isAnnotationPresent(Autowired.class)) {
                 autoWireFields.add(field);
                 String id = field.isAnnotationPresent(Id.class)
                         ? field.getAnnotation(Id.class).value()
@@ -200,6 +227,9 @@ public class AnnotationContainerFactory implements ContainerFactory {
         };
     }
 
+    /**
+     * 处理实例方法注入
+     */
     private static void processMethod(Class<?> instanceType, Method method, Container container) {
         // 获取方法参数注入类型
         Class<?>[] paramTypes = method.getParameterTypes();
@@ -220,8 +250,8 @@ public class AnnotationContainerFactory implements ContainerFactory {
                 ? instanceType.getAnnotation(Id.class).value()
                 : null;
 
-        // 创建对象工厂
-        ObjectDefinition factory = new ObjectDefinition() {
+        // 创建ObjectDefinition
+        ObjectDefinition definition = new ObjectDefinition() {
             @Override
             public Class<?> getType() {
                 return method.getReturnType();
@@ -258,9 +288,12 @@ public class AnnotationContainerFactory implements ContainerFactory {
                 : method.getName();
 
         // 注册对象工厂
-        container.registerObject(id, factory);
+        container.registerObject(id, definition);
     }
 
+    /**
+     * 加载ByxAOP相关依赖
+     */
     private static Method loadByxAopProxyMethod() {
         try {
             return Class.forName(AOP_PROXY_CREATOR).getMethod(AOP_PROXY_CREATOR_METHOD, Object.class, Object.class);
@@ -269,12 +302,16 @@ public class AnnotationContainerFactory implements ContainerFactory {
         }
     }
 
+    /**
+     * 处理AOP代理
+     */
     private static Function<Object, Object> processWrap(Class<?> type, Container container) {
         if (type.isAnnotationPresent(AdviceBy.class)) {
             Class<?> adviceType = type.getAnnotation(AdviceBy.class).value();
             Method method = loadByxAopProxyMethod();
             return obj -> {
                 try {
+                    // 调用ByxAOP的相关方法创建代理对象
                     return method.invoke(null, obj, container.getObject(adviceType));
                 } catch (IllegalAccessException e) {
                     throw new ByxAopNotFoundException();
