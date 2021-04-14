@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AnnotationContainerFactoryTest2 {
     @Test
     public void test1() {
-        Container container = new AnnotationContainerFactory("byx.ioc.factory.test2").create();
+        Container container = new AnnotationContainerFactory(A.class).create();
         for (String id : container.getObjectIds()) {
             System.out.println(id);
         }

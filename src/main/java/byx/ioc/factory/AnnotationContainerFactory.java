@@ -52,6 +52,15 @@ public class AnnotationContainerFactory implements ContainerFactory {
         this.basePackage = basePackage;
     }
 
+    /**
+     * 创建一个AnnotationContainerFactory
+     * 扫描baseClass所在的包及其子包下的所有类
+     * @param baseClass 基类
+     */
+    public AnnotationContainerFactory(Class<?> baseClass) {
+        this.basePackage = baseClass.getPackageName();
+    }
+
     @Override
     public Container create() {
         // 获取包下的所有类

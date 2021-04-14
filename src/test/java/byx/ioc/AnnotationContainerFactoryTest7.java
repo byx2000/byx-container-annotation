@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 public class AnnotationContainerFactoryTest7 {
     @Test
     public void test() {
-        Container container = new AnnotationContainerFactory("byx.ioc.factory.test7.测试中文包名").create();
+        Container container = new AnnotationContainerFactory(A.class).create();
         for (String id : container.getObjectIds()) {
             System.out.println(id);
         }
