@@ -8,7 +8,7 @@ import byx.ioc.core.*;
 import byx.ioc.exception.ByxAopNotFoundException;
 import byx.ioc.exception.ConstructorMultiDefException;
 import byx.ioc.exception.ConstructorNotFoundException;
-import byx.ioc.util.ReflectUtils;
+import byx.ioc.util.PackageUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -55,7 +55,7 @@ public class AnnotationContainerFactory implements ContainerFactory {
     @Override
     public Container create() {
         // 获取包下的所有类
-        List<Class<?>> classes = ReflectUtils.getPackageClasses(basePackage);
+        List<Class<?>> classes = PackageUtils.getPackageClasses(basePackage);
 
         // 创建容器
         Container container = new SimpleContainer();

@@ -5,7 +5,7 @@ package byx.ioc.exception;
  *
  * @author byx
  */
-public class ConstructorNotFoundException extends ByxContainerException {
+public class ConstructorNotFoundException extends RuntimeException {
     public ConstructorNotFoundException(Class<?> type) {
         super("Cannot find properly constructor in class " + type.getCanonicalName());
     }

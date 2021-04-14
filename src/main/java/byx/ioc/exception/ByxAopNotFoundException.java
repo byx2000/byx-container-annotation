@@ -5,7 +5,7 @@ package byx.ioc.exception;
  *
  * @author byx
  */
-public class ByxAopNotFoundException extends ByxContainerException {
+public class ByxAopNotFoundException extends RuntimeException {
     public ByxAopNotFoundException() {
         super("Cannot found ByxAOP dependency.");
     }

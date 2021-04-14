@@ -5,7 +5,7 @@ package byx.ioc.exception;
  *
  * @author byx
  */
-public class PackageScanException extends ByxContainerException{
+public class PackageScanException extends RuntimeException {
     public PackageScanException(Throwable cause) {
         super("Exception occur when scanning package.", cause);
     }
