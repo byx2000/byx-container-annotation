@@ -1,7 +1,8 @@
 package byx.ioc.factory.test14;
 
-import byx.ioc.annotation.AdviceBy;
 import byx.ioc.annotation.Component;
+import byx.ioc.extension.aop.annotation.AdviceBy;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @Component

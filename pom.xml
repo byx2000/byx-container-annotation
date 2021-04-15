@@ -36,8 +36,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>byx.aop</groupId>
-            <artifactId>byx-aop</artifactId>
+            <groupId>byx.ioc</groupId>
+            <artifactId>byx-container-extension-aop</artifactId>
             <version>1.0.0</version>
             <scope>test</scope>
         </dependency>
