@@ -1,6 +1,6 @@
 # ByxContainerAnnotation
 
-一个基于注解的轻量级IOC容器，模仿Spring IOC设计，支持构造函数注入和字段注入，支持循环依赖处理和检测，支持AOP。
+一个基于注解的轻量级IOC容器，支持构造函数注入和字段注入，支持循环依赖处理和检测，具有高可扩展的插件系统。
 
 ## Maven引入
 
@@ -541,75 +541,72 @@ public static void main(String[] args) {
 }
 ```
 
-## AOP整合
+## 扩展
 
-ByxContainerAnnotation支持整合ByxAOP功能，需要引入下列依赖：
+ByxContainer提供了一个灵活的插件系统，你可以通过引入一些名称为`byx-container-extension-*`的依赖来扩展ByxContainer的功能。当然，你也可以编写自己的扩展。
 
-```xml
-<dependency>
-    <groupId>byx.ioc</groupId>
-    <artifactId>byx-container-extension-aop</artifactId>
-    <version>1.0.0</version>
-</dependency>
-```
+### 当前已有的扩展
 
-首先声明一个切面类：
+|扩展|说明|
+|---|---|
+|[byx-container-extension-aop](https://github.com/byx2000/byx-container-extension-aop)|提供面向切面编程（AOP）的支持，包括前置增强（`@Before`）、后置增强（`@After`）、环绕增强（`@Around`）、异常增强（`@AfterThrowing`）四种增强类型|
+|[byx-container-extension-transaction](https://github.com/byx2000/byx-container-extension-transaction)|提供声明式事务的支持，包括对`JdbcUtils`和`@Transactional`注解的支持|
 
-```java
-@Component
-public class Advice {
-    @Before
-    public void before() {
-        System.out.println("before");
+### 自己编写扩展
+
+`AnnotationContainerFactory`对外提供两个扩展点：
+
+* `ContainerCallback`接口
+
+    该接口定义如下：
+
+    ```java
+    public interface ContainerCallback {
+        void afterContainerInit(Container container);
+
+        default int getOrder() {
+            return 1;
+        }
     }
+    ```
 
-    @After
-    public void after() {
-        System.out.println("after");
+    `ContainerCallback`类似于Spring的`BeanFactoryPostProcessor`。`afterContainerInit`方法会在包扫描结束后回调，用户可通过创建该接口的实现类来动态地向容器中注册额外的组件。
+
+    当存在多个`ContainerCallback`时，它们调用的先后顺序取决于`getOrder`返回的顺序值，数字小的先执行。
+
+* `ObjectCallback`接口
+
+    该接口定义如下：
+
+    ```java
+    public interface ObjectCallback{
+        default void afterObjectInit(ObjectCallbackContext ctx) {
+
+        }
+
+        default Object afterObjectWrap(ObjectCallbackContext ctx) {
+            return ctx.getObject();
+        }
+
+        default int getOrder() {
+            return 1;
+        }
     }
-}
-```
+    ```
 
-注意，切面类必须要标注`Component`注解。
+    `ObjectCallback`类似于Spring的`BeanPostProcessor`。`afterObjectInit`方法会在对象初始化后（即属性填充后）回调，`afterObjectWrap`方法会在代理对象创建后回调。
 
-使用`AdviceBy`注解来为组件指定切面类：
+    当存在多个`ObjectCallback`时，它们调用的先后顺序取决于`getOrder`返回的顺序值，数字小的先执行。
 
-```java
-@Component
-@AdviceBy(Advice.class)
-public class A {
-    public void f() {
-        System.out.println("f");
-    }
+编写ByxContainer扩展的步骤：
 
-    public void g() {
-        System.out.println("g");
-    }
-}
-```
+1. 定义一个或多个`ContainerCallback`和`ObjectCallback`的实现类，这些实现类需要有可访问的默认构造函数
 
-主函数：
+2. 在`resources`目录下创建一个名为`byx-container-extension.properties`的文件，该文件声明了需要导出的组件，包含的键值如下：
 
-```java
-public static void main(String[] args) {
-    Container container = new AnnotationContainerFactory("byx.test").create();
-    A a = container.getObject(A.class);
-    a.f();
-    a.g();
-}
-```
+    |键值|含义|
+    |---|---|
+    |`containerCallback`|所有`ContainerCallback`的全限定类名，用`,`分隔|
+    |`objectCallback`|所有`ObjectCallback`的全限定类名，用`,`分隔|
 
-运行主函数，控制台输出如下：
-
-```
-before
-f
-after
-before
-g
-after
-```
-
-可以看到，`A`的`f`和`g`方法都被增强了。
-
-关于切面类的编写，请看[ByxAOP](https://github.com/byx2000/ByxAOP)。
+3. 将该项目打包成Jar包或Maven依赖，在主项目（即引入了byx-container-annotation的项目）中引入，即可启用自定义的回调组件
