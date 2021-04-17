@@ -1,18 +1,16 @@
-package byx.ioc;
+package byx.ioc.factory.test1;
 
 import byx.ioc.core.Container;
 import byx.ioc.factory.AnnotationContainerFactory;
-import byx.ioc.factory.test1.A;
 import byx.ioc.factory.test1.x.B;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class AnnotationContainerFactoryTest1 {
+public class Test1 {
     @Test
     public void test() {
-        Container container = new AnnotationContainerFactory("byx.ioc.factory.test1").create();
+        Container container = new AnnotationContainerFactory(Test1.class).create();
         for (String id : container.getObjectIds()) {
             System.out.println(id);
         }

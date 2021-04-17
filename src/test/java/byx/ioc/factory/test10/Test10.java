@@ -1,4 +1,4 @@
-package byx.ioc;
+package byx.ioc.factory.test10;
 
 import byx.ioc.core.Container;
 import byx.ioc.factory.AnnotationContainerFactory;
@@ -9,10 +9,10 @@ import byx.ioc.factory.test10.service.impl.UserServiceImpl;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class AnnotationContainerFactoryTest10 {
+public class Test10 {
     @Test
     public void test() {
-        Container container = new AnnotationContainerFactory("byx.ioc.factory.test10").create();
+        Container container = new AnnotationContainerFactory(Test10.class).create();
         for (String id : container.getObjectIds()) {
             System.out.println(id);
         }

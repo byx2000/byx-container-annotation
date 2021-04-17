@@ -1,19 +1,16 @@
-package byx.ioc;
+package byx.ioc.factory.test13;
 
 import byx.ioc.core.Container;
 import byx.ioc.exception.CircularDependencyException;
 import byx.ioc.factory.AnnotationContainerFactory;
-import byx.ioc.factory.test13.A;
-import byx.ioc.factory.test13.B;
-import byx.ioc.factory.test13.C;
-import byx.ioc.factory.test13.D;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
-public class AnnotationContainerFactoryTest13 {
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+public class Test13 {
     @Test
     public void test1() {
-        Container container = new AnnotationContainerFactory("byx.ioc.factory.test13").create();
+        Container container = new AnnotationContainerFactory(Test13.class).create();
         for (String id : container.getObjectIds()) {
             System.out.println(id);
         }
@@ -26,7 +23,7 @@ public class AnnotationContainerFactoryTest13 {
 
     @Test
     public void test2() {
-        Container container = new AnnotationContainerFactory("byx.ioc.factory.test13").create();
+        Container container = new AnnotationContainerFactory(Test13.class).create();
         for (String id : container.getObjectIds()) {
             System.out.println(id);
         }

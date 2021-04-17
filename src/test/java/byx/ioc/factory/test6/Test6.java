@@ -1,4 +1,4 @@
-package byx.ioc;
+package byx.ioc.factory.test6;
 
 import byx.ioc.core.Container;
 import byx.ioc.exception.ConstructorMultiDefException;
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class AnnotationContainerFactoryTest6 {
+public class Test6 {
     @Test
     public void test() {
         Container container = new AnnotationContainerFactory("byx.ioc.factory.test6.x").create();

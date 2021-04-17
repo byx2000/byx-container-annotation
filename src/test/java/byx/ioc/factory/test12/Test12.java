@@ -1,19 +1,17 @@
-package byx.ioc;
+package byx.ioc.factory.test12;
 
 import byx.ioc.core.Container;
 import byx.ioc.factory.AnnotationContainerFactory;
 import byx.ioc.factory.Counter;
-import byx.ioc.factory.test12.A;
-import byx.ioc.factory.test12.B;
-import byx.ioc.factory.test12.C;
-import byx.ioc.factory.test12.D;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
-public class AnnotationContainerFactoryTest12 {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+
+public class Test12 {
     @Test
     public void test1() {
-        Container container = new AnnotationContainerFactory("byx.ioc.factory.test12").create();
+        Container container = new AnnotationContainerFactory(Test12.class).create();
         for (String id : container.getObjectIds()) {
             System.out.println(id);
         }
@@ -45,7 +43,7 @@ public class AnnotationContainerFactoryTest12 {
 
     @Test
     public void test2() {
-        Container container = new AnnotationContainerFactory("byx.ioc.factory.test12").create();
+        Container container = new AnnotationContainerFactory(Test12.class).create();
         for (String id : container.getObjectIds()) {
             System.out.println(id);
         }
