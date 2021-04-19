@@ -13,13 +13,7 @@ import byx.ioc.util.PackageUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * ContainerFactory的实现类：通过注解扫描来创建IOC容器
@@ -62,18 +56,8 @@ public class AnnotationContainerFactory extends ExtendableContainerFactory {
         // 获取实例化的构造函数
         Constructor<?> constructor = getConstructor(type);
 
-        // 处理依赖解析
-        Supplier<Dependency[]> getDependencies = processDependencies(constructor);
-
-        // 处理初始化
-        Consumer<Object> initialization = processInit(type, container);
-
-        // 处理方法
-        for (Method method : type.getMethods()) {
-            if (method.isAnnotationPresent(Component.class)) {
-                processMethod(type, method, container);
-            }
-        }
+        // 获取实例化的依赖项
+        Dependency[] dependencies = processDependencies(constructor);
 
         // 创建ObjectDefinition
         ObjectDefinition definition = new ObjectDefinition() {
@@ -84,7 +68,7 @@ public class AnnotationContainerFactory extends ExtendableContainerFactory {
 
             @Override
             public Dependency[] getInstanceDependencies() {
-                return getDependencies.get();
+                return dependencies;
             }
 
             @Override
@@ -94,11 +78,6 @@ public class AnnotationContainerFactory extends ExtendableContainerFactory {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            }
-
-            @Override
-            public void doInit(Object obj) {
-                initialization.accept(obj);
             }
         };
 
@@ -142,7 +121,7 @@ public class AnnotationContainerFactory extends ExtendableContainerFactory {
     /**
      * 构造函数依赖项的获取
      */
-    private static Supplier<Dependency[]> processDependencies(Constructor<?> constructor) {
+    private static Dependency[] processDependencies(Constructor<?> constructor) {
         // 获取构造函数参数的注入类型
         Class<?>[] paramTypes = constructor.getParameterTypes();
 
@@ -157,117 +136,16 @@ public class AnnotationContainerFactory extends ExtendableContainerFactory {
             }
         }
 
-        // 返回依赖获取函数
-        return () -> {
-            Dependency[] dependencies = new Dependency[paramTypes.length];
-            for (int i = 0; i < dependencies.length; ++i) {
-                if (paramIds[i] != null) {
-                    dependencies[i] = Dependency.id(paramIds[i]);
-                } else {
-                    dependencies[i] = Dependency.type(paramTypes[i]);
-                }
-            }
-            return dependencies;
-        };
-    }
-
-    /**
-     * 处理对象初始化逻辑
-     */
-    private static Consumer<Object> processInit(Class<?> type, Container container) {
-        // 获取所有需要被赋值的字段
-        List<Field> autoWireFields = new ArrayList<>();
-        List<String> autoWireIds = new ArrayList<>();
-        for (Field field : type.getDeclaredFields()) {
-            if (field.isAnnotationPresent(Autowired.class)) {
-                autoWireFields.add(field);
-                String id = field.isAnnotationPresent(Id.class)
-                        ? field.getAnnotation(Id.class).value()
-                        : null;
-                autoWireIds.add(id);
+        // 解析依赖项
+        Dependency[] dependencies = new Dependency[paramTypes.length];
+        for (int i = 0; i < dependencies.length; ++i) {
+            if (paramIds[i] != null) {
+                dependencies[i] = Dependency.id(paramIds[i]);
+            } else {
+                dependencies[i] = Dependency.type(paramTypes[i]);
             }
         }
 
-        // 返回字段初始化函数
-        return obj -> {
-            for (int i = 0; i < autoWireFields.size(); ++i) {
-                Field field = autoWireFields.get(i);
-                field.setAccessible(true);
-                String id = autoWireIds.get(i);
-                try {
-                    if (id == null) {
-                        field.set(obj, container.getObject(field.getType()));
-                    } else {
-                        field.set(obj, container.getObject(id));
-                    }
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
-    }
-
-    /**
-     * 处理实例方法注入
-     */
-    private static void processMethod(Class<?> instanceType, Method method, Container container) {
-        // 获取方法参数注入类型
-        Class<?>[] paramTypes = method.getParameterTypes();
-        Annotation[][] paramAnnotations = method.getParameterAnnotations();
-        
-        // 获取方法参数注入id
-        String[] paramIds = new String[paramTypes.length];
-        for (int i = 0; i < paramTypes.length; ++i) {
-            for (Annotation a : paramAnnotations[i]) {
-                if (a instanceof Id) {
-                    paramIds[i] = ((Id) a).value();
-                }
-            }
-        }
-
-        // 获取方法所属的对象实例id
-        String instanceId = instanceType.isAnnotationPresent(Id.class)
-                ? instanceType.getAnnotation(Id.class).value()
-                : null;
-
-        // 创建ObjectDefinition
-        ObjectDefinition definition = new ObjectDefinition() {
-            @Override
-            public Class<?> getType() {
-                return method.getReturnType();
-            }
-
-            @Override
-            public Dependency[] getInstanceDependencies() {
-                Dependency[] dependencies = new Dependency[paramTypes.length];
-                for (int i = 0; i < dependencies.length; ++i) {
-                    if (paramIds[i] != null) {
-                        dependencies[i] = Dependency.id(paramIds[i]);
-                    } else {
-                        dependencies[i] = Dependency.type(paramTypes[i]);
-                    }
-                }
-                return dependencies;
-            }
-
-            @Override
-            public Object getInstance(Object[] params) {
-                Object instance = (instanceId == null) ? container.getObject(instanceType) : container.getObject(instanceId);
-                try {
-                    method.setAccessible(true);
-                    return method.invoke(instance, params);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
-
-        // 获取id
-        String id = method.isAnnotationPresent(Id.class)
-                ? method.getAnnotation(Id.class).value()
-                : method.getName();
-
-        // 注册对象工厂
-        container.registerObject(id, definition);
+        return dependencies;
     }
 }
