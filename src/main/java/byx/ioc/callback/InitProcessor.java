@@ -13,6 +13,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 处理init方法
+ *
+ * @author byx
+ */
 public class InitProcessor implements ObjectCallback {
     @Override
     public void afterObjectInit(ObjectCallbackContext ctx) {
@@ -20,6 +25,7 @@ public class InitProcessor implements ObjectCallback {
         Class<?> type = obj.getClass();
         Container container = ctx.getContainer();
 
+        // 查找标注了Init注解的方法
         List<Method> methods = Arrays.stream(type.getMethods())
                 .filter(m -> m.isAnnotationPresent(Init.class))
                 .collect(Collectors.toList());
@@ -28,6 +34,7 @@ public class InitProcessor implements ObjectCallback {
             return;
         }
 
+        // 存在多个被Init注解标注的方法，直接报错
         if (methods.size() > 1) {
             throw new MultiInitMethodDefException(type);
         }
