@@ -92,19 +92,19 @@ hi
 
 如无特殊说明，以下示例中的类均定义在`byx.test`包下。
 
-### AnnotationContainerFactory类
+### AnnotationContainerFactory
 
 该类是`ContainerFactory`接口的实现类，`ContainerFactory`是容器工厂，用于从指定的地方创建IOC容器。
 
 `AnnotationContainerFactory`通过包扫描的方式创建IOC容器，用法如下：
 
 ```java
-Container container = new AnnotationContainerFactory(/*包名*/).create();
+Container container = new AnnotationContainerFactory(/*包名或某个类的Class对象*/).create();
 ```
 
-在构造`AnnotationContainerFactory`时，需要传入一个包名。调用`create`方法时，该包及其子包下所有标注了`@Component`的类都会被扫描，扫描完成后返回一个`Container`实例。
+在构造`AnnotationContainerFactory`时，需要传入一个包名或者某个类的`Class`对象。调用`create`方法时，该包及其子包下所有标注了`@Component`的类都会被扫描，扫描完成后返回一个`Container`实例。
 
-### Container接口
+### Container
 
 该接口是IOC容器的根接口，可以用该接口接收`ContainerFactory`的`create`方法的返回值，内含方法如下：
 
@@ -118,7 +118,7 @@ Container container = new AnnotationContainerFactory(/*包名*/).create();
 用法如下：
 
 ```java
-Container container = ...;
+Container container = new AnnotationContainerFactory(...).create();
 
 // 获取容器中类型为A的对象
 A a = container.getObject(A.class);
@@ -139,16 +139,13 @@ public class A {}
 
 public class B {}
 
-public static void main(String[] args) {
-    Container container = new AnnotationContainerFactory("byx.test").create();
 
-    // 可以获取到A对象
-    A a = container.getObject(A.class);
+// 可以获取到A对象
+A a = container.getObject(A.class);
 
-    // 这条语句执行会抛出TypeNotFoundException
-    // 因为class B没有标注@Component注解，所以没有被注册到IOC容器中
-    //B b = container.getObject(B.class);
-}
+// 这条语句执行会抛出TypeNotFoundException
+// 因为class B没有标注@Component注解，所以没有被注册到IOC容器中
+B b = container.getObject(B.class);
 ```
 
 `@Component`注解还可以加在方法上，用于向IOC容器注册一个实例方法创建的对象，注册的id为方法名。
@@ -158,20 +155,15 @@ public static void main(String[] args) {
 ```java
 @Component
 public class A {
+    // 注册了一个id为msg的String
     @Component
     public String msg() {
         return "hello";
     }
 }
 
-public static void main(String[] args) {
-    Container container = new AnnotationContainerFactory("byx.test").create();
-
-    A a = container.getObject(A.class);
-
-    // msg的值为hello
-    String msg = container.getObject("msg");
-}
+// msg的值为hello
+String msg = container.getObject("msg");
 ```
 
 注意，如果某个方法被标注了`@Component`，则该方法所属的类也必须标注`@Component`，否则该方法不会被包扫描器扫描。
@@ -186,12 +178,8 @@ public static void main(String[] args) {
 @Component @Id("a")
 public class A {}
 
-public static void main(String[] args) {
-    Container container = new AnnotationContainerFactory("byx.test").create();
-
-    // 可以成功获取到A对象
-    A a = container.getObject("a");
-}
+// 使用id获取A对象
+A a = container.getObject("a");
 ```
 
 注意，如果类上没有标注`@Id`，则该类注册时的id为该类的全限定类名。
@@ -203,18 +191,15 @@ public static void main(String[] args) {
 ```java
 @Component
 public class A {
+    // 注册了一个id为msg的String
     @Component @Id("msg")
     public String f() {
         return "hello";
     }
 }
 
-public static void main(String[] args) {
-    Container container = new AnnotationContainerFactory("byx.test").create();
-
-    // msg的值为hello
-    String msg = container.getObject("msg");
-}
+// hello
+String msg = container.getObject("msg");
 ```
 
 `@Id`注解还可以加在方法参数和字段上，请看[构造函数注入](#构造函数注入)、[方法参数注入](#方法参数注入)和[@Autowire自动装配](#@Autowire自动装配)。
@@ -230,6 +215,7 @@ public static void main(String[] args) {
 public class A {
     private final B b;
 
+    // 通过构造函数注入字段b
     public A(B b) {
         this.b = b;
     }
@@ -238,12 +224,8 @@ public class A {
 @Component
 public class B {}
 
-public static void main(String[] args) {
-    Container container = new AnnotationContainerFactory("byx.test").create();
-
-    // a被正确地构造，其属性b也被正确地赋值
-    A a = container.getObject(A.class);
-}
+// a被正确地构造，其字段b也被正确地注入
+A a = container.getObject(A.class);
 ```
 
 在构造函数的参数上可以使用`@Id`注解来指定注入的对象id。如果没有标注`@Id`注解，则默认是按照类型注入。
@@ -255,6 +237,7 @@ public static void main(String[] args) {
 public class A {
     private final B b;
 
+    // 通过构造函数注入id为b1的对象
     public A(@Id("b1") B b) {
         this.b = b;
     }
@@ -268,12 +251,8 @@ public class B1 extends B {}
 @Component @Id("b2")
 public class B2 extends B {}
 
-public static void main(String[] args) {
-    Container container = new AnnotationContainerFactory("byx.test").create();
-
-    // 此时a中的b注入的是B1的实例
-    A a = container.getObject(A.class);
-}
+// 此时a中的b注入的是B1的实例
+A a = container.getObject(A.class);
 ```
 
 对于有多个构造函数的类，需要使用`@Autowire`注解标记实例化所用的构造函数。
@@ -290,6 +269,7 @@ public class A {
         this.i = i;
     }
 
+    // 使用这个构造函数来创建A对象
     @Autowire
     public A(String s) {
         this.s = s;
@@ -309,19 +289,15 @@ public class B {
     }
 }
 
-public static void main(String[] args) {
-    Container container = new AnnotationContainerFactory("byx.test").create();
-
-    // 使用带String参数的构造函数实例化的a
-    A a = container.getObject(A.class);
-}
+// 使用带String参数的构造函数实例化的a
+A a = container.getObject(A.class);
 ```
 
 注意，不允许同时在多个构造函数上标注`@Autowire`注解。
 
 ### @Autowired自动装配
 
-`@Autowired`注解标注在对象中的字段上，用于自动装配对象的字段。
+`@Autowired`注解标注在对象中的字段上，用于直接注入对象的字段。
 
 例子：
 
@@ -335,12 +311,8 @@ public class A {
 @Component
 public class B {}
 
-public static void main(String[] args) {
-    Container container = new AnnotationContainerFactory("byx.test").create();
-
-    // a中的字段b被成功注入
-    A a = container.getObject(A.class);
-}
+// a中的字段b被成功注入
+A a = container.getObject(A.class);
 ```
 
 默认情况下，`@Autowired`按照类型注入。`@Autowired`也可以配合`@Id`一起使用，实现按照id注入。
@@ -350,6 +322,7 @@ public static void main(String[] args) {
 ```java
 @Component
 public class A {
+    // 注入id为b1的对象
     @Autowired @Id("b1")
     private B b;
 }
@@ -362,12 +335,8 @@ public class B1 extends B {}
 @Component @Id("b2")
 public class B2 extends B {}
 
-public static void main(String[] args) {
-    Container container = new AnnotationContainerFactory("byx.test").create();
-
-    // a中的字段b注入的是B1的对象
-    A a = container.getObject(A.class);
-}
+// a中的字段b注入的是B1的对象
+A a = container.getObject(A.class);
 ```
 
 `@Autowired`还可标注在构造函数上，请看[构造函数注入](#构造函数注入)。
@@ -381,6 +350,7 @@ public static void main(String[] args) {
 ```java
 @Component
 public class A {
+    // 该方法的所有参数都从容器中获得
     @Component
     public String s(@Id("s1") String s1, @Id("s2") String s2) {
         return s1 + " " + s2;
@@ -400,12 +370,54 @@ public class B {
     }
 }
 
-public static void main(String[] args) {
-    Container container = new AnnotationContainerFactory("byx.test").create();
+// s的值为：hello hi
+String s = container.getObject("s");
+```
 
-    // s的值为：hello hi
-    String s = container.getObject("s");
+### @Init注解
+
+`@Init`注解用于指定对象的初始化方法，该方法在对象属性填充后、创建代理对象前创建。
+
+例子：
+
+```java
+@Component
+public class A {
+    public A() {
+        System.out.println("constructor");
+        State.state += "c";
+    }
+
+    @Autowired
+    public void set1(String s) {
+        System.out.println("setter 1");
+        State.state += "s";
+    }
+
+    @Init
+    public void init() {
+        System.out.println("init");
+        State.state += "i";
+    }
+
+    @Autowired
+    public void set2(Integer i) {
+        System.out.println("setter 2");
+        State.state += "s";
+    }
 }
+
+// 获取a对象
+A a = container.getObject(A.class);
+```
+
+输出如下：
+
+```
+constructor
+setter 1
+setter 2
+init
 ```
 
 ## 循环依赖
