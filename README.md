@@ -420,6 +420,65 @@ setter 2
 init
 ```
 
+### @Value注解
+
+`@Value`注解用于向容器中注册常量值。该注解标注在某个被`@Component`标注的类上，可重复标注。
+
+```java
+@Component
+// 注册一个id为strVal、值为hello的String类型的对象
+@Value(id = "strVal", value = "hello")
+// 注册一个id为intVal、值为123的int类型的对象
+@Value(type = int.class, id = "intVal", value = "123")
+// 注册一个id和值都为hi的String类型的对象
+@Value(value = "hi")
+// 注册一个id和值都为6.28的double类型的对象
+@Value(type = double.class, value = "6.28")
+public class A {
+}
+```
+
+用户可通过实现一个`ValueConverter`来注册自定义类型：
+
+```java
+public class User {
+    private final Integer id;
+    private final String username;
+    private final String password;
+
+    public User(Integer id, String username, String password) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+    }
+
+    // 省略getter和setter ...
+}
+
+@Component // 注意，该转换器要在容器中注册
+public class UserConverter implements ValueConverter {
+    @Override
+    public Class<?> getType() {
+        return User.class;
+    }
+
+    @Override
+    public Object convert(String s) {
+        // 将字符串转换为User对象
+        s = s.substring(5, s.length() - 1);
+        System.out.println(s);
+        String[] ps = s.split(",");
+        System.out.println(Arrays.toString(ps));
+        return new User(Integer.valueOf(ps[0]), ps[1].substring(1, ps[1].length() - 1), ps[2].substring(1, ps[2].length() - 1));
+    }
+}
+
+// 注册一个User对象
+@Value(id = "user", type = User.class, value = "User(1001,'byx','123')")
+public class A {
+}
+```
+
 ## 循环依赖
 
 ByxContainerAnnotation支持各种循环依赖的处理和检测，以下是一些例子。
