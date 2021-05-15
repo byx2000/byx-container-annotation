@@ -9,7 +9,7 @@ import byx.ioc.core.ExtendableContainerFactory;
 import byx.ioc.core.ObjectDefinition;
 import byx.ioc.exception.ConstructorMultiDefException;
 import byx.ioc.exception.ConstructorNotFoundException;
-import byx.ioc.util.PackageUtils;
+import byx.ioc.util.AnnotationScanner;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -47,8 +47,8 @@ public class AnnotationContainerFactory extends ExtendableContainerFactory {
     @Override
     protected void initContainer(Container container) {
         // 扫描包下所有标注了Component注解的类
-        PackageUtils.getPackageClasses(basePackage).stream()
-                .filter(c -> c.isAnnotationPresent(Component.class))
+        new AnnotationScanner(basePackage)
+                .getClassesAnnotatedBy(Component.class)
                 .forEach(c -> processClass(c, container));
     }
 
